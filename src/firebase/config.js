@@ -2,15 +2,13 @@ import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
-// Configurá tus variables de entorno en Vercel:
-// Settings > Environment Variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyBSB80qI_B77sjk3gkin7iRbkE2GNENbSY',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'felges.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'felges',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'felges.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1028185607490',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:1028185607490:web:dc7d1559e66223e97a8cdb'
 }
 
 const app = initializeApp(firebaseConfig)
