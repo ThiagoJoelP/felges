@@ -4,8 +4,10 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <header className="page-header">
-        <h2>Dashboard</h2>
-        <p>Bienvenido al panel de administración</p>
+        <div>
+          <h2>Dashboard</h2>
+          <p>Bienvenido a FELMA - Sistema de gestión</p>
+        </div>
       </header>
 
       <div className="stats-grid">
