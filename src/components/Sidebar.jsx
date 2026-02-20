@@ -1,6 +1,15 @@
 import { NavLink } from 'react-router-dom'
 
 function Sidebar() {
+  const links = [
+    { to: '/', label: 'Dashboard', icon: '📊' },
+    { to: '/productos', label: 'Productos', icon: '📦' },
+    { to: '/costos', label: 'Costos', icon: '🧮' },
+    { to: '/listas-precios', label: 'Listas de Precios', icon: '📋' },
+    { to: '/facturacion', label: 'Facturación', icon: '🧾' },
+    { to: '/stock', label: 'Stock', icon: '🏭' },
+  ]
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -8,9 +17,16 @@ function Sidebar() {
         <p className="sidebar-subtitle">Sistema de gestión</p>
       </div>
       <nav className="sidebar-nav">
-        <NavLink to="/" end className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-          <span className="nav-icon">📊</span> Dashboard
-        </NavLink>
+        {links.map(link => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.to === '/'}
+            className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          >
+            <span className="nav-icon">{link.icon}</span> {link.label}
+          </NavLink>
+        ))}
       </nav>
     </aside>
   )
