@@ -1,23 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { db } from '../firebase/config'
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
 
 function Productos() {
-  const [productos, setProductos] = useState([
-    { id: 1, codigo: 'DP003', nombre: 'Depósito de colgar a cadena', tipo: 'compuesto', unidadVenta: 'x 6 u.', estado: 'activo' },
-    { id: 2, codigo: 'DP004', nombre: 'Depósito de colgar a botón', tipo: 'compuesto', unidadVenta: 'x 6 u.', estado: 'activo' },
-    { id: 3, codigo: 'RS001', nombre: 'Flotante para Dep. de colgar', tipo: 'compuesto', unidadVenta: 'x 1 u.', estado: 'activo' },
-    { id: 4, codigo: 'RS019', nombre: 'Boya p/ flotante tanque de 3/4', tipo: 'simple', unidadVenta: 'x 100 u.', estado: 'activo' },
-    { id: 5, codigo: 'RS020', nombre: 'Aro Base Inodoro', tipo: 'simple', unidadVenta: 'x 50 u.', estado: 'activo' },
-    { id: 6, codigo: 'RS005', nombre: 'Boya universal con carga', tipo: 'compuesto', unidadVenta: 'x 50 u.', estado: 'activo' },
-    { id: 7, codigo: 'RS013', nombre: 'Conexión fuelle Olmos grande', tipo: 'simple', unidadVenta: 'x 1 u.', estado: 'no_fabrica' },
-  ])
-
+  const [productos, setProductos] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [filtro, setFiltro] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('todos')
   const [nuevoProducto, setNuevoProducto] = useState({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', estado: 'activo' })
-
   const [editandoId, setEditandoId] = useState(null)
-  const [showComponentes, setShowComponentes] = useState(null)
+
+  useEffect(() => {
+    const q = query(collection(db, 'productos'), orderBy('codigo'))
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      setProductos(data)
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [])
 
   const productosFiltrados = productos.filter(p => {
     const matchTexto = p.codigo.toLowerCase().includes(filtro.toLowerCase()) || p.nombre.toLowerCase().includes(filtro.toLowerCase())
@@ -25,16 +27,20 @@ function Productos() {
     return matchTexto && matchTipo
   })
 
-  const handleGuardar = () => {
+  const handleGuardar = async () => {
     if (!nuevoProducto.codigo || !nuevoProducto.nombre) return
-    if (editandoId) {
-      setProductos(productos.map(p => p.id === editandoId ? { ...nuevoProducto, id: editandoId } : p))
-      setEditandoId(null)
-    } else {
-      setProductos([...productos, { ...nuevoProducto, id: Date.now() }])
+    try {
+      if (editandoId) {
+        await updateDoc(doc(db, 'productos', editandoId), nuevoProducto)
+        setEditandoId(null)
+      } else {
+        await addDoc(collection(db, 'productos'), { ...nuevoProducto, creadoEn: new Date().toISOString() })
+      }
+      setNuevoProducto({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', estado: 'activo' })
+      setShowForm(false)
+    } catch (err) {
+      alert('Error al guardar: ' + err.message)
     }
-    setNuevoProducto({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', estado: 'activo' })
-    setShowForm(false)
   }
 
   const handleEditar = (prod) => {
@@ -43,11 +49,13 @@ function Productos() {
     setShowForm(true)
   }
 
-  const handleEliminar = (id) => {
+  const handleEliminar = async (id) => {
     if (window.confirm('¿Eliminar este producto?')) {
-      setProductos(productos.filter(p => p.id !== id))
+      await deleteDoc(doc(db, 'productos', id))
     }
   }
+
+  if (loading) return <div style={{padding: 40, textAlign: 'center', color: '#64748b'}}>Cargando productos...</div>
 
   return (
     <div>
@@ -128,7 +136,7 @@ function Productos() {
                 <td><span className={`status ${prod.estado === 'activo' ? 'active' : 'inactive'}`}>{prod.estado === 'activo' ? 'Activo' : 'No se fabrica'}</span></td>
                 <td>
                   <button className="btn-sm" onClick={() => handleEditar(prod)}>Editar</button>
-                  {prod.tipo === 'compuesto' && <button className="btn-sm btn-blue" onClick={() => setShowComponentes(showComponentes === prod.id ? null : prod.id)}>Componentes</button>}
+                  {prod.tipo === 'compuesto' && <button className="btn-sm btn-blue">Componentes</button>}
                   <button className="btn-sm btn-danger" onClick={() => handleEliminar(prod.id)}>Eliminar</button>
                 </td>
               </tr>
