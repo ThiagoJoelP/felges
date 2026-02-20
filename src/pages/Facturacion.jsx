@@ -1,18 +1,10 @@
-import { useState } from 'react'
-
-const catalogoProductos = [
-  { codigo: 'DP003', nombre: 'Depósito de colgar a cadena', precios: { distribuidor: 8163.00, mayorista: 9000.00, vendedor: 10500.00 } },
-  { codigo: 'DP004', nombre: 'Depósito de colgar a botón', precios: { distribuidor: 8899.50, mayorista: 9800.00, vendedor: 11200.00 } },
-  { codigo: 'RS001', nombre: 'Flotante para Dep. de colgar', precios: { distribuidor: 802.20, mayorista: 900.00, vendedor: 1050.00 } },
-  { codigo: 'RS005', nombre: 'Boya universal con carga', precios: { distribuidor: 1045.50, mayorista: 1150.00, vendedor: 1350.00 } },
-  { codigo: 'RS008', nombre: 'Tapa con pulsador corto', precios: { distribuidor: 1619.70, mayorista: 1780.00, vendedor: 2050.00 } },
-  { codigo: 'RS019', nombre: 'Boya p/ flotante tanque 3/4', precios: { distribuidor: 514.00, mayorista: 570.00, vendedor: 650.00 } },
-  { codigo: 'RS020', nombre: 'Aro Base Inodoro', precios: { distribuidor: 558.30, mayorista: 620.00, vendedor: 720.00 } },
-  { codigo: 'RS030', nombre: 'Sopapa 50mm tornillo acero inox.', precios: { distribuidor: 1442.10, mayorista: 1590.00, vendedor: 1850.00 } },
-  { codigo: 'RS045', nombre: 'Boya p/pastilla de cloro chica', precios: { distribuidor: 700.00, mayorista: 770.00, vendedor: 900.00 } },
-]
+import { useState, useEffect } from 'react'
+import { db } from '../firebase/config'
+import { collection, onSnapshot, addDoc, query, orderBy } from 'firebase/firestore'
 
 function Facturacion() {
+  const [productos, setProductos] = useState([])
+  const [precios, setPrecios] = useState([])
   const [listaSeleccionada, setListaSeleccionada] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [sugerencias, setSugerencias] = useState([])
@@ -20,12 +12,24 @@ function Facturacion() {
   const [cantidad, setCantidad] = useState(1)
   const [productoSeleccionado, setProductoSeleccionado] = useState(null)
   const [cliente, setCliente] = useState('')
+  const [guardando, setGuardando] = useState(false)
+  const [mensaje, setMensaje] = useState('')
+
+  useEffect(() => {
+    const unsub1 = onSnapshot(collection(db, 'precios'), (snap) => {
+      setPrecios(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+    const unsub2 = onSnapshot(collection(db, 'productos'), (snap) => {
+      setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+    return () => { unsub1(); unsub2() }
+  }, [])
 
   const handleBusqueda = (val) => {
     setBusqueda(val)
     if (val.length >= 2) {
-      const found = catalogoProductos.filter(p =>
-        p.codigo.toLowerCase().includes(val.toLowerCase()) || p.nombre.toLowerCase().includes(val.toLowerCase())
+      const found = precios.filter(p =>
+        p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())
       )
       setSugerencias(found)
     } else {
@@ -41,27 +45,45 @@ function Facturacion() {
 
   const handleAgregar = () => {
     if (!productoSeleccionado || !listaSeleccionada) return
-    const precio = productoSeleccionado.precios[listaSeleccionada]
+    const precio = productoSeleccionado[listaSeleccionada] || 0
     setItems([...items, {
       id: Date.now(),
       codigo: productoSeleccionado.codigo,
       nombre: productoSeleccionado.nombre,
-      precioUnit: precio,
+      precioUnit: Number(precio),
       cantidad: parseInt(cantidad),
-      subtotal: precio * parseInt(cantidad),
+      subtotal: Number(precio) * parseInt(cantidad),
     }])
     setBusqueda('')
     setProductoSeleccionado(null)
     setCantidad(1)
   }
 
-  const handleEliminarItem = (id) => {
-    setItems(items.filter(i => i.id !== id))
+  const handleEliminarItem = (id) => setItems(items.filter(i => i.id !== id))
+
+  const handleGuardarFactura = async () => {
+    if (items.length === 0) return
+    setGuardando(true)
+    try {
+      await addDoc(collection(db, 'facturas'), {
+        cliente: cliente || 'Sin cliente',
+        lista: listaSeleccionada,
+        items: items.map(i => ({ codigo: i.codigo, nombre: i.nombre, precioUnit: i.precioUnit, cantidad: i.cantidad, subtotal: i.subtotal })),
+        total,
+        fecha: new Date().toISOString(),
+      })
+      setMensaje('Factura guardada correctamente')
+      setItems([])
+      setCliente('')
+      setTimeout(() => setMensaje(''), 4000)
+    } catch (err) {
+      alert('Error: ' + err.message)
+    }
+    setGuardando(false)
   }
 
   const total = items.reduce((sum, item) => sum + item.subtotal, 0)
-  const formatPrecio = (n) => '$' + n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
+  const formatPrecio = (n) => '$' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const listasNombres = { distribuidor: 'Distribuidores', mayorista: 'Mayoristas', vendedor: 'Vendedor Propio' }
 
   return (
@@ -72,6 +94,8 @@ function Facturacion() {
           <p>Crear factura con cálculo automático de precios</p>
         </div>
       </header>
+
+      {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>✓ {mensaje}</div>}
 
       {!listaSeleccionada ? (
         <div className="card">
@@ -106,9 +130,9 @@ function Facturacion() {
                 {sugerencias.length > 0 && (
                   <div className="autocomplete-list">
                     {sugerencias.map(s => (
-                      <div key={s.codigo} className="autocomplete-item" onClick={() => handleSeleccionar(s)}>
+                      <div key={s.id} className="autocomplete-item" onClick={() => handleSeleccionar(s)}>
                         <strong>{s.codigo}</strong> — {s.nombre}
-                        <span className="autocomplete-precio">{formatPrecio(s.precios[listaSeleccionada])}</span>
+                        <span className="autocomplete-precio">{formatPrecio(s[listaSeleccionada] || 0)}</span>
                       </div>
                     ))}
                   </div>
@@ -151,6 +175,13 @@ function Facturacion() {
               <div className="factura-total">
                 <span>TOTAL</span>
                 <span className="factura-total-valor">{formatPrecio(total)}</span>
+              </div>
+            )}
+            {items.length > 0 && (
+              <div style={{marginTop: 16, textAlign: 'right'}}>
+                <button className="btn-primary" onClick={handleGuardarFactura} disabled={guardando}>
+                  {guardando ? 'Guardando...' : '💾 Guardar Factura'}
+                </button>
               </div>
             )}
           </div>
