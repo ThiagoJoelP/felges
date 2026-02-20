@@ -1,18 +1,22 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg-primary: #0a1628;
-  --bg-secondary: #0d1f3c;
-  --bg-card: #112240;
-  --text-primary: #ffffff;
-  --text-secondary: #8892b0;
-  --accent: #64ffda;
-  --accent-hover: #45e0be;
-  --accent-dark: #0d7377;
+  --bg-primary: #f8f9fb;
+  --bg-secondary: #53A0FD;
+  --bg-card: #ffffff;
+  --text-primary: #1a2332;
+  --text-secondary: #64748b;
+  --accent: #5cc6b0;
+  --accent-hover: #4ab39e;
+  --accent-light: rgba(92, 198, 176, 0.1);
   --danger: #ef4444;
-  --success: #64ffda;
-  --border: #1e3a5f;
+  --success: #5cc6b0;
+  --border: #e2e8f0;
   --sidebar-width: 260px;
+  --sidebar-text: #ffffff;
+  --sidebar-text-muted: rgba(255, 255, 255, 0.7);
+  --sidebar-hover: rgba(255, 255, 255, 0.12);
+  --sidebar-active: rgba(255, 255, 255, 0.22);
 }
 
 body {
@@ -30,10 +34,11 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .btn-primary {
-  background: var(--accent); color: var(--bg-primary); border: none;
+  background: var(--accent); color: #ffffff; border: none;
   padding: 10px 20px; border-radius: 8px; cursor: pointer;
   font-size: 14px; font-weight: 600; transition: background 0.2s;
 }
@@ -57,7 +62,7 @@ body {
 .page-header p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
 
 .badge {
-  background: rgba(100, 255, 218, 0.1); color: var(--accent);
+  background: var(--accent-light); color: var(--accent);
   padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
 }
 
@@ -66,7 +71,7 @@ body {
 .status.inactive { color: var(--text-secondary); }
 
 code {
-  background: var(--bg-secondary); padding: 2px 8px;
+  background: var(--bg-primary); padding: 2px 8px;
   border-radius: 4px; font-size: 13px; color: var(--accent);
 }
 
@@ -74,29 +79,29 @@ code {
 .sidebar {
   width: var(--sidebar-width); height: 100vh; position: fixed;
   top: 0; left: 0; background: var(--bg-secondary);
-  border-right: 1px solid var(--border); padding: 24px 16px;
+  padding: 24px 16px;
   display: flex; flex-direction: column;
 }
 .sidebar-header {
-  padding: 0 12px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+  padding: 0 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 16px;
 }
 .sidebar-logo {
   font-size: 22px; font-weight: 800;
-  color: var(--accent);
+  color: var(--sidebar-text);
   letter-spacing: 2px;
 }
 .sidebar-subtitle {
-  font-size: 12px; color: var(--text-secondary);
+  font-size: 12px; color: var(--sidebar-text-muted);
   margin-top: 4px; letter-spacing: 0.5px;
 }
 .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
 .nav-link {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 16px; border-radius: 8px; text-decoration: none;
-  color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.2s;
+  color: var(--sidebar-text-muted); font-size: 14px; font-weight: 500; transition: all 0.2s;
 }
-.nav-link:hover { color: var(--accent); background: rgba(100, 255, 218, 0.05); }
-.nav-link.active { color: var(--bg-primary); background: var(--accent); font-weight: 600; }
+.nav-link:hover { color: var(--sidebar-text); background: var(--sidebar-hover); }
+.nav-link.active { color: var(--sidebar-text); background: var(--sidebar-active); font-weight: 600; }
 .nav-icon { font-size: 18px; }
 
 /* Stats */
@@ -108,12 +113,13 @@ code {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 12px; padding: 20px; display: flex;
   align-items: center; gap: 16px; transition: border-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .stat-card:hover { border-color: var(--accent); }
 .stat-card-icon {
   font-size: 28px; width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(100, 255, 218, 0.08); border-radius: 10px;
+  background: var(--accent-light); border-radius: 10px;
 }
 .stat-card-info { display: flex; flex-direction: column; }
 .stat-card-title { font-size: 13px; color: var(--text-secondary); }
@@ -146,7 +152,7 @@ code {
 }
 .users-table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border); }
 .users-table tr:last-child td { border-bottom: none; }
-.users-table tr:hover td { background: rgba(100, 255, 218, 0.03); }
+.users-table tr:hover td { background: var(--bg-primary); }
 
 /* Settings */
 .settings-grid {
