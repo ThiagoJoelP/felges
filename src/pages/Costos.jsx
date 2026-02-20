@@ -1,38 +1,50 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { db } from '../firebase/config'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 function Costos() {
-  const [parametros, setParametros] = useState({
-    precioKgVirgen: '',
-    precioKgReciclado: '',
-    costoHoraMO: '',
-    costoHoraLuz: '',
-  })
+  const [parametros, setParametros] = useState({ precioKgVirgen: '', precioKgReciclado: '', costoHoraMO: '', costoHoraLuz: '' })
+  const [guardando, setGuardando] = useState(false)
+  const [mensaje, setMensaje] = useState('')
 
-  const [producto, setProducto] = useState({
-    codigo: '',
-    nombre: '',
-    gramosUsados: '',
-    tipoMaterial: 'virgen',
-    tiempoProduccionMin: '',
-    margenPorcentaje: '',
-  })
+  const [producto, setProducto] = useState({ codigo: '', nombre: '', gramosUsados: '', tipoMaterial: 'virgen', tiempoProduccionMin: '', margenPorcentaje: '' })
 
-  const costoMaterial = producto.gramosUsados && parametros.precioKgVirgen
+  useEffect(() => {
+    const cargar = async () => {
+      const snap = await getDoc(doc(db, 'configuracion', 'parametrosCostos'))
+      if (snap.exists()) setParametros(snap.data())
+    }
+    cargar()
+  }, [])
+
+  const handleGuardarParametros = async () => {
+    setGuardando(true)
+    try {
+      await setDoc(doc(db, 'configuracion', 'parametrosCostos'), {
+        precioKgVirgen: parametros.precioKgVirgen,
+        precioKgReciclado: parametros.precioKgReciclado,
+        costoHoraMO: parametros.costoHoraMO,
+        costoHoraLuz: parametros.costoHoraLuz,
+        actualizadoEn: new Date().toISOString()
+      })
+      setMensaje('Parámetros guardados correctamente')
+      setTimeout(() => setMensaje(''), 3000)
+    } catch (err) {
+      alert('Error: ' + err.message)
+    }
+    setGuardando(false)
+  }
+
+  const costoMaterial = producto.gramosUsados && (parametros.precioKgVirgen || parametros.precioKgReciclado)
     ? (parseFloat(producto.gramosUsados) / 1000) * parseFloat(producto.tipoMaterial === 'virgen' ? parametros.precioKgVirgen : parametros.precioKgReciclado || 0)
     : 0
-
   const costoMO = producto.tiempoProduccionMin && parametros.costoHoraMO
-    ? (parseFloat(producto.tiempoProduccionMin) / 60) * parseFloat(parametros.costoHoraMO)
-    : 0
-
+    ? (parseFloat(producto.tiempoProduccionMin) / 60) * parseFloat(parametros.costoHoraMO) : 0
   const costoLuz = producto.tiempoProduccionMin && parametros.costoHoraLuz
-    ? (parseFloat(producto.tiempoProduccionMin) / 60) * parseFloat(parametros.costoHoraLuz)
-    : 0
-
+    ? (parseFloat(producto.tiempoProduccionMin) / 60) * parseFloat(parametros.costoHoraLuz) : 0
   const costoTotal = costoMaterial + costoMO + costoLuz
   const margen = producto.margenPorcentaje ? (costoTotal * parseFloat(producto.margenPorcentaje)) / 100 : 0
   const precioSugerido = costoTotal + margen
-
   const formatNum = (n) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
@@ -47,7 +59,7 @@ function Costos() {
       <div className="costos-layout">
         <div className="card">
           <h3>⚙️ Parámetros Globales</h3>
-          <p className="card-desc">Estos valores se usan para calcular el costo de todos los productos</p>
+          <p className="card-desc">Estos valores se usan para calcular el costo de todos los productos. Se guardan en Firebase.</p>
           <div className="form-grid">
             <div className="form-group">
               <label>Precio kg plástico virgen ($)</label>
@@ -65,6 +77,12 @@ function Costos() {
               <label>Costo hora luz ($)</label>
               <input type="number" placeholder="0.00" value={parametros.costoHoraLuz} onChange={e => setParametros({...parametros, costoHoraLuz: e.target.value})} />
             </div>
+          </div>
+          <div style={{display:'flex', alignItems:'center', gap: 12, marginTop: 16}}>
+            <button className="btn-primary" onClick={handleGuardarParametros} disabled={guardando}>
+              {guardando ? 'Guardando...' : 'Guardar Parámetros'}
+            </button>
+            {mensaje && <span style={{color: 'var(--success)', fontSize: 13, fontWeight: 500}}>✓ {mensaje}</span>}
           </div>
         </div>
 
