@@ -4,8 +4,9 @@ function Sidebar() {
   const links = [
     { to: '/', label: 'Dashboard', icon: '📊' },
     { to: '/productos', label: 'Productos', icon: '📦' },
+    { to: '/componentes', label: 'Componentes', icon: '🔩' },
     { to: '/costos', label: 'Costos', icon: '🧮' },
-    { to: '/listas-precios', label: 'Listas de Precios', icon: '📋' },
+    { to: '/ventas', label: 'Ventas', icon: '🛒' },
     { to: '/facturacion', label: 'Facturación', icon: '🧾' },
     { to: '/stock', label: 'Stock', icon: '🏭' },
   ]
