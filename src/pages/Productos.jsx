@@ -11,7 +11,7 @@ function Productos() {
   const [filtroTipo, setFiltroTipo] = useState('todos')
   const [editandoId, setEditandoId] = useState(null)
   const [verComponentes, setVerComponentes] = useState(null)
-  const [form, setForm] = useState({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] })
+  const [form, setForm] = useState({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', precioUnitario: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] })
 
   useEffect(() => {
     const q1 = query(collection(db, 'productos'), orderBy('codigo'))
@@ -31,8 +31,7 @@ function Productos() {
     return componentes.filter(c => prod.componentesIds.includes(c.id))
   }
 
-  const getCostoTotal = () => {
-    if (form.tipo === 'simple') return 0
+  const getCostoComponentes = () => {
     return form.componentesIds.reduce((sum, cid) => {
       const comp = componentes.find(c => c.id === cid)
       return sum + (comp ? Number(comp.costoTotal || 0) : 0)
@@ -42,17 +41,19 @@ function Productos() {
   const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const listasNombres = { distribuidor: 'Distribuidor', mayorista: 'Mayorista', vendedor: 'Vendedor propio' }
 
+  const precioTotalLote = (Number(form.precioUnitario) || 0) * (Number(form.unidadVenta) || 0)
+
   const handleGuardar = async () => {
     if (!form.codigo || !form.nombre || !form.unidadVenta) return
+    const precioUnit = Number(form.precioUnitario) || 0
+    const unidades = Number(form.unidadVenta) || 0
     const data = {
-      codigo: form.codigo,
-      nombre: form.nombre,
-      tipo: form.tipo,
-      unidadVenta: Number(form.unidadVenta),
-      estado: form.estado,
-      lista: form.lista,
+      codigo: form.codigo, nombre: form.nombre, tipo: form.tipo,
+      unidadVenta: unidades, precioUnitario: precioUnit,
+      precioLote: precioUnit * unidades,
+      estado: form.estado, lista: form.lista,
       componentesIds: form.tipo === 'compuesto' ? form.componentesIds : [],
-      costoTotal: form.tipo === 'compuesto' ? getCostoTotal() : 0,
+      costoTotal: form.tipo === 'compuesto' ? getCostoComponentes() : 0,
       actualizadoEn: new Date().toISOString()
     }
     try {
@@ -62,24 +63,21 @@ function Productos() {
       } else {
         await addDoc(collection(db, 'productos'), { ...data, creadoEn: new Date().toISOString() })
       }
-      setForm({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] })
+      setForm({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', precioUnitario: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] })
       setShowForm(false)
     } catch (err) { alert('Error: ' + err.message) }
   }
 
   const handleEditar = (p) => {
-    setForm({ codigo: p.codigo, nombre: p.nombre, tipo: p.tipo, unidadVenta: p.unidadVenta || '', estado: p.estado, lista: p.lista || 'distribuidor', componentesIds: p.componentesIds || [] })
+    setForm({ codigo: p.codigo, nombre: p.nombre, tipo: p.tipo, unidadVenta: p.unidadVenta || '', precioUnitario: p.precioUnitario || '', estado: p.estado, lista: p.lista || 'distribuidor', componentesIds: p.componentesIds || [] })
     setEditandoId(p.id)
     setShowForm(true)
   }
 
-  const handleEliminar = async (id) => { if (window.confirm('¿Eliminar?')) await deleteDoc(doc(db, 'productos', id)) }
+  const handleEliminar = async (id) => { if (window.confirm('¿Eliminar este producto?')) await deleteDoc(doc(db, 'productos', id)) }
 
   const toggleComponente = (cid) => {
-    setForm(prev => ({
-      ...prev,
-      componentesIds: prev.componentesIds.includes(cid) ? prev.componentesIds.filter(x => x !== cid) : [...prev.componentesIds, cid]
-    }))
+    setForm(prev => ({ ...prev, componentesIds: prev.componentesIds.includes(cid) ? prev.componentesIds.filter(x => x !== cid) : [...prev.componentesIds, cid] }))
   }
 
   if (loading) return <div style={{padding: 40, textAlign: 'center', color: '#64748b'}}>Cargando...</div>
@@ -88,7 +86,7 @@ function Productos() {
     <div>
       <header className="page-header">
         <div><h2>Productos</h2><p>Gestión de productos simples y compuestos</p></div>
-        <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] }) }}>
+        <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', precioUnitario: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] }) }}>
           {showForm ? 'Cancelar' : '+ Nuevo Producto'}
         </button>
       </header>
@@ -105,6 +103,7 @@ function Productos() {
               </select>
             </div>
             <div className="form-group"><label>Unidad de venta</label><input type="number" min="1" placeholder="Ej: 100 = x 100 u." value={form.unidadVenta} onChange={e => setForm({...form, unidadVenta: e.target.value})} /></div>
+            <div className="form-group"><label>Precio unitario ($)</label><input type="number" min="0" step="0.01" placeholder="Precio por unidad" value={form.precioUnitario} onChange={e => setForm({...form, precioUnitario: e.target.value})} /></div>
             <div className="form-group"><label>Lista de precio</label>
               <select value={form.lista} onChange={e => setForm({...form, lista: e.target.value})}>
                 <option value="distribuidor">Distribuidor</option><option value="mayorista">Mayorista</option><option value="vendedor">Vendedor propio</option>
@@ -117,11 +116,18 @@ function Productos() {
             </div>
           </div>
 
+          {form.precioUnitario && form.unidadVenta && (
+            <div style={{marginTop: 14, padding: '10px 14px', background: 'rgba(15,41,66,0.04)', borderRadius: 8, display: 'inline-block', border: '1px solid var(--border)'}}>
+              <span style={{fontSize: 13, color: 'var(--text-secondary)'}}>Precio por lote (x{form.unidadVenta} u.): </span>
+              <strong style={{color: 'var(--navy)', fontSize: 15}}>{fmt(precioTotalLote)}</strong>
+            </div>
+          )}
+
           {form.tipo === 'compuesto' && (
             <div style={{marginTop: 16}}>
-              <label style={{fontWeight: 600, fontSize: 14, marginBottom: 8, display: 'block'}}>Seleccionar Componentes:</label>
+              <label style={{fontWeight: 600, fontSize: 12, marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--text-secondary)'}}>Seleccionar Componentes:</label>
               {componentes.length === 0 ? (
-                <p style={{color: '#64748b', fontSize: 13}}>No hay componentes. Crealos primero en la sección Componentes.</p>
+                <p style={{color: '#94a3b8', fontSize: 13}}>No hay componentes. Crealos primero en la sección Componentes.</p>
               ) : (
                 <div className="componentes-selector">
                   {componentes.map(c => (
@@ -133,17 +139,19 @@ function Productos() {
                   ))}
                 </div>
               )}
-              <div style={{marginTop: 12, padding: '10px 14px', background: 'var(--accent-light)', borderRadius: 8, display: 'inline-block'}}>
-                <strong>Costo Total Componentes: {fmt(getCostoTotal())}</strong>
-              </div>
+              {form.componentesIds.length > 0 && (
+                <div style={{marginTop: 10, padding: '10px 14px', background: 'var(--teal-light)', borderRadius: 8, display: 'inline-block'}}>
+                  <strong style={{color: 'var(--teal)', fontSize: 13}}>Costo Componentes: {fmt(getCostoComponentes())}</strong>
+                </div>
+              )}
             </div>
           )}
 
-          <div style={{marginTop: 16}}><button className="btn-primary" onClick={handleGuardar}>{editandoId ? 'Guardar Cambios' : 'Crear Producto'}</button></div>
+          <div style={{marginTop: 18}}><button className="btn-primary" onClick={handleGuardar}>{editandoId ? 'Guardar Cambios' : 'Crear Producto'}</button></div>
         </div>
       )}
 
-      <div className="card" style={{marginTop: 20}}>
+      <div className="card" style={{marginTop: 16}}>
         <div className="table-filters">
           <input type="text" className="search-input" placeholder="Buscar por código o nombre..." value={filtro} onChange={e => setFiltro(e.target.value)} />
           <select className="filter-select" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
@@ -151,19 +159,20 @@ function Productos() {
           </select>
         </div>
         <table className="data-table">
-          <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Unidad</th><th>Lista</th><th>Costo</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Unidad</th><th>P. Unit.</th><th>P. Lote</th><th>Lista</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody>
             {productosFiltrados.map(prod => {
               const comps = getComponentesProducto(prod)
               return (
-                <>
-                  <tr key={prod.id}>
+                <React.Fragment key={prod.id}>
+                  <tr>
                     <td><strong>{prod.codigo}</strong></td>
                     <td>{prod.nombre}</td>
                     <td><span className={`badge ${prod.tipo === 'compuesto' ? 'badge-blue' : ''}`}>{prod.tipo === 'simple' ? 'Simple' : 'Compuesto'}</span></td>
                     <td>x {prod.unidadVenta} u.</td>
+                    <td>{fmt(prod.precioUnitario)}</td>
+                    <td><strong>{fmt(prod.precioLote || (prod.precioUnitario || 0) * (prod.unidadVenta || 0))}</strong></td>
                     <td><span className="badge">{listasNombres[prod.lista] || '-'}</span></td>
-                    <td>{fmt(prod.costoTotal)}</td>
                     <td><span className={`status ${prod.estado === 'activo' ? 'active' : 'inactive'}`}>{prod.estado === 'activo' ? 'Activo' : 'No se fabrica'}</span></td>
                     <td>
                       <button className="btn-sm" onClick={() => handleEditar(prod)}>Editar</button>
@@ -176,8 +185,8 @@ function Productos() {
                     </td>
                   </tr>
                   {verComponentes === prod.id && comps.length > 0 && (
-                    <tr key={prod.id + '-comp'}>
-                      <td colSpan="8" style={{padding: 0}}>
+                    <tr>
+                      <td colSpan="9" style={{padding: 0}}>
                         <div className="comp-detail-box">
                           <strong>Componentes de {prod.nombre}:</strong>
                           <div className="comp-detail-list">
@@ -192,10 +201,10 @@ function Productos() {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               )
             })}
-            {productosFiltrados.length === 0 && <tr><td colSpan="8" style={{textAlign: 'center', color: '#64748b', padding: 32}}>No se encontraron productos</td></tr>}
+            {productosFiltrados.length === 0 && <tr><td colSpan="9" style={{textAlign: 'center', color: '#94a3b8', padding: 32}}>No se encontraron productos</td></tr>}
           </tbody>
         </table>
       </div>
@@ -203,4 +212,5 @@ function Productos() {
   )
 }
 
+import React from 'react'
 export default Productos
