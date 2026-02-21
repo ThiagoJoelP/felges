@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
-import { collection, onSnapshot, addDoc, doc, updateDoc, query, orderBy } from 'firebase/firestore'
+import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
 
 function Ventas() {
   const [productos, setProductos] = useState([])
@@ -16,9 +16,9 @@ function Ventas() {
   const [mensaje, setMensaje] = useState('')
 
   useEffect(() => {
-    const unsub1 = onSnapshot(collection(db, 'productos'), s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    const unsub2 = onSnapshot(collection(db, 'stock'), s => setStockData(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    return () => { unsub1(); unsub2() }
+    const u1 = onSnapshot(collection(db, 'productos'), s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+    const u2 = onSnapshot(collection(db, 'stock'), s => setStockData(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+    return () => { u1(); u2() }
   }, [])
 
   const productosLista = productos.filter(p => p.lista === listaSeleccionada && p.estado === 'activo')
@@ -30,7 +30,8 @@ function Ventas() {
   const handleBusqueda = (val) => {
     setBusqueda(val)
     if (val.length >= 1) {
-      setSugerencias(productosLista.filter(p => p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())))
+      const found = productosLista.filter(p => p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase()))
+      setSugerencias(found)
       const exact = productosLista.find(p => p.codigo?.toLowerCase() === val.toLowerCase())
       if (exact) { setSeleccionado(exact); setBusqueda(exact.codigo + ' - ' + exact.nombre); setSugerencias([]) }
     } else { setSugerencias([]); setSeleccionado(null) }
@@ -45,7 +46,7 @@ function Ventas() {
     const maxDisp = stockDisp - cantYaEnItems
     const cant = Math.min(parseInt(cantidad) || 1, maxDisp)
     if (cant <= 0) { alert('No hay stock suficiente para este producto'); return }
-    const precio = Number(seleccionado.costoTotal || 0)
+    const precio = Number(seleccionado.precioUnitario || 0)
     setItems([...items, { id: Date.now(), productoId: seleccionado.id, codigo: seleccionado.codigo, nombre: seleccionado.nombre, precioUnit: precio, cantidad: cant, subtotal: precio * cant }])
     setBusqueda(''); setSeleccionado(null); setCantidad(1)
   }
@@ -75,11 +76,12 @@ function Ventas() {
   return (
     <div>
       <header className="page-header"><div><h2>Ventas</h2><p>Registrar ventas por lista de precios</p></div></header>
-      {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>✓ {mensaje}</div>}
+      {mensaje && <div className="alertas-bar" style={{background: 'var(--teal-light)', borderColor: 'var(--teal)', color: '#065f46'}}>✓ {mensaje}</div>}
 
       {!listaSeleccionada ? (
         <div className="card">
           <h3>Seleccioná la lista de precios</h3>
+          <p className="card-desc">Elegí la lista según el tipo de cliente</p>
           <div className="lista-selector">
             {Object.entries(listasNombres).map(([k, v]) => (
               <button key={k} className="lista-option" onClick={() => setListaSeleccionada(k)}>
@@ -92,15 +94,15 @@ function Ventas() {
         <>
           <div className="factura-header-bar">
             <div className="factura-info">
-              <span className="factura-lista-badge">Lista: {listasNombres[listaSeleccionada]}</span>
-              <button className="btn-sm" onClick={() => { setListaSeleccionada(''); setItems([]) }}>Cambiar lista</button>
+              <span className="factura-lista-badge">{listasNombres[listaSeleccionada]}</span>
+              <button className="btn-sm" onClick={() => { setListaSeleccionada(''); setItems([]) }}>Cambiar</button>
             </div>
-            <div className="form-group" style={{margin: 0, flex: 1, maxWidth: 300}}>
+            <div className="form-group" style={{margin: 0, flex: 1, maxWidth: 280}}>
               <input type="text" placeholder="Cliente (opcional)" value={cliente} onChange={e => setCliente(e.target.value)} />
             </div>
           </div>
 
-          <div className="card" style={{marginTop: 16}}>
+          <div className="card" style={{marginTop: 14}}>
             <h3>Agregar Producto</h3>
             <div className="factura-agregar">
               <div className="autocomplete-wrapper">
@@ -109,20 +111,23 @@ function Ventas() {
                   <div className="autocomplete-list">
                     {sugerencias.map(s => (
                       <div key={s.id} className="autocomplete-item" onClick={() => handleSeleccionar(s)}>
-                        <strong>{s.codigo}</strong> — {s.nombre}
-                        <span style={{fontSize: 12, color: '#64748b'}}>Stock: {getStock(s.codigo)}</span>
+                        <div><strong>{s.codigo}</strong> — {s.nombre}</div>
+                        <div style={{display:'flex', gap: 12, fontSize: 12}}>
+                          <span className="autocomplete-precio">{fmt(s.precioUnitario || 0)}/u.</span>
+                          <span style={{color: '#94a3b8'}}>Stock: {getStock(s.codigo)}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-              {seleccionado && <span style={{fontSize: 13, color: '#64748b', whiteSpace: 'nowrap'}}>Stock: {getStock(seleccionado.codigo)}</span>}
+              {seleccionado && <span style={{fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap', paddingTop: 10}}>Stock: {getStock(seleccionado.codigo)}</span>}
               <input type="number" className="cantidad-input" min="1" max={seleccionado ? getStock(seleccionado.codigo) : 999} value={cantidad} onChange={e => setCantidad(e.target.value)} />
               <button className="btn-primary" onClick={handleAgregar} disabled={!seleccionado}>Agregar</button>
             </div>
           </div>
 
-          <div className="card" style={{marginTop: 16}}>
+          <div className="card" style={{marginTop: 14}}>
             <table className="data-table">
               <thead><tr><th>Código</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
               <tbody>
@@ -130,14 +135,14 @@ function Ventas() {
                   <tr key={i.id}><td><strong>{i.codigo}</strong></td><td>{i.nombre}</td><td>{fmt(i.precioUnit)}</td><td>{i.cantidad}</td><td><strong>{fmt(i.subtotal)}</strong></td>
                     <td><button className="btn-sm btn-danger" onClick={() => handleEliminarItem(i.id)}>✕</button></td></tr>
                 ))}
-                {items.length === 0 && <tr><td colSpan="6" style={{textAlign: 'center', color: '#64748b', padding: 32}}>Agregá productos para la venta</td></tr>}
+                {items.length === 0 && <tr><td colSpan="6" style={{textAlign: 'center', color: '#94a3b8', padding: 32}}>Agregá productos para la venta</td></tr>}
               </tbody>
             </table>
             {items.length > 0 && (
               <>
                 <div className="factura-total"><span>TOTAL</span><span className="factura-total-valor">{fmt(total)}</span></div>
                 <div style={{marginTop: 16, textAlign: 'right'}}>
-                  <button className="btn-primary" onClick={handleGuardarVenta} disabled={guardando}>{guardando ? 'Guardando...' : '💾 Registrar Venta'}</button>
+                  <button className="btn-primary" onClick={handleGuardarVenta} disabled={guardando}>{guardando ? 'Guardando...' : 'Registrar Venta'}</button>
                 </div>
               </>
             )}
