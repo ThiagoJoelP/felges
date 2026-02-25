@@ -29,15 +29,22 @@ function Ventas() {
 
   const handleBusqueda = (val) => {
     setBusqueda(val)
+    setSeleccionado(null)
     if (val.length >= 1) {
-      const found = productosLista.filter(p => p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase()))
+      const found = productosLista.filter(p =>
+        p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())
+      )
       setSugerencias(found)
-      const exact = productosLista.find(p => p.codigo?.toLowerCase() === val.toLowerCase())
-      if (exact) { setSeleccionado(exact); setBusqueda(exact.codigo + ' - ' + exact.nombre); setSugerencias([]) }
-    } else { setSugerencias([]); setSeleccionado(null) }
+    } else {
+      setSugerencias([])
+    }
   }
 
-  const handleSeleccionar = (p) => { setSeleccionado(p); setBusqueda(p.codigo + ' - ' + p.nombre); setSugerencias([]) }
+  const handleSeleccionar = (p) => {
+    setSeleccionado(p)
+    setBusqueda(p.codigo + ' - ' + p.nombre)
+    setSugerencias([])
+  }
 
   const handleAgregar = () => {
     if (!seleccionado) return
