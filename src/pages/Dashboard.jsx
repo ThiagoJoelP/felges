@@ -21,9 +21,15 @@ function Dashboard() {
   const mesActual = new Date().getMonth()
   const ventasMes = ventas.filter(v => new Date(v.fecha).getMonth() === mesActual)
   const totalVentasMes = ventasMes.reduce((s, v) => s + (v.total || 0), 0)
-  const alertasStock = stock.filter(s => (s.cantidad || 0) === 0).length
   const pendientes = ventas.filter(v => !v.facturada).length
   const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  // Count products with no stock: either no entry in stock collection, or quantity is 0
+  const getStockCant = (codigo) => {
+    const s = stock.find(x => x.codigo === codigo)
+    return s ? (s.cantidad || 0) : 0
+  }
+  const sinStock = productos.filter(p => p.estado === 'activo' && getStockCant(p.codigo) === 0).length
 
   return (
     <div className="dashboard">
@@ -38,7 +44,7 @@ function Dashboard() {
         <StatCard title="Productos Activos" value={activos} icon="📦" />
         <StatCard title="Ventas del Mes" value={ventasMes.length} icon="🛒" />
         <StatCard title="Facturado del Mes" value={fmt(totalVentasMes)} icon="💰" />
-        <StatCard title="Sin Stock" value={alertasStock} icon="⚠️" />
+        <StatCard title="Sin Stock" value={sinStock} icon="⚠️" />
       </div>
 
       <div className="dashboard-grid">
