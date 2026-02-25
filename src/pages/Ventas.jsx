@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { List, X } from 'lucide-react'
 
 function Ventas() {
   const [productos, setProductos] = useState([])
@@ -14,6 +15,8 @@ function Ventas() {
   const [cliente, setCliente] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerBusqueda, setDrawerBusqueda] = useState('')
 
   useEffect(() => {
     const u1 = onSnapshot(collection(db, 'productos'), s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
@@ -27,35 +30,39 @@ function Ventas() {
   const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const listasNombres = { distribuidor: 'Distribuidores', mayorista: 'Mayoristas', vendedor: 'Vendedor Propio' }
 
+  const drawerProductos = productosLista.filter(p => {
+    if (!drawerBusqueda) return true
+    return p.codigo?.toLowerCase().includes(drawerBusqueda.toLowerCase()) || p.nombre?.toLowerCase().includes(drawerBusqueda.toLowerCase())
+  })
+
   const handleBusqueda = (val) => {
     setBusqueda(val)
     setSeleccionado(null)
     if (val.length >= 1) {
-      const found = productosLista.filter(p =>
-        p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())
-      )
-      setSugerencias(found)
-    } else {
-      setSugerencias([])
-    }
+      setSugerencias(productosLista.filter(p => p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())))
+    } else { setSugerencias([]) }
   }
 
-  const handleSeleccionar = (p) => {
-    setSeleccionado(p)
-    setBusqueda(p.codigo + ' - ' + p.nombre)
-    setSugerencias([])
+  const handleSeleccionar = (p) => { setSeleccionado(p); setBusqueda(p.codigo + ' - ' + p.nombre); setSugerencias([]) }
+
+  const agregarProducto = (prod, cant) => {
+    const stockDisp = getStock(prod.codigo)
+    const cantYaEnItems = items.filter(i => i.codigo === prod.codigo).reduce((s, i) => s + i.cantidad, 0)
+    const maxDisp = stockDisp - cantYaEnItems
+    const cantFinal = Math.min(cant, maxDisp)
+    if (cantFinal <= 0) { alert('No hay stock suficiente para ' + prod.nombre); return }
+    const precio = Number(prod.precioUnitario || 0)
+    setItems(prev => [...prev, { id: Date.now(), productoId: prod.id, codigo: prod.codigo, nombre: prod.nombre, precioUnit: precio, cantidad: cantFinal, subtotal: precio * cantFinal }])
   }
 
   const handleAgregar = () => {
     if (!seleccionado) return
-    const stockDisp = getStock(seleccionado.codigo)
-    const cantYaEnItems = items.filter(i => i.codigo === seleccionado.codigo).reduce((s, i) => s + i.cantidad, 0)
-    const maxDisp = stockDisp - cantYaEnItems
-    const cant = Math.min(parseInt(cantidad) || 1, maxDisp)
-    if (cant <= 0) { alert('No hay stock suficiente para este producto'); return }
-    const precio = Number(seleccionado.precioUnitario || 0)
-    setItems([...items, { id: Date.now(), productoId: seleccionado.id, codigo: seleccionado.codigo, nombre: seleccionado.nombre, precioUnit: precio, cantidad: cant, subtotal: precio * cant }])
+    agregarProducto(seleccionado, parseInt(cantidad) || 1)
     setBusqueda(''); setSeleccionado(null); setCantidad(1)
+  }
+
+  const handleDrawerAdd = (prod) => {
+    agregarProducto(prod, 1)
   }
 
   const handleEliminarItem = (id) => setItems(items.filter(i => i.id !== id))
@@ -102,7 +109,7 @@ function Ventas() {
           <div className="factura-header-bar">
             <div className="factura-info">
               <span className="factura-lista-badge">{listasNombres[listaSeleccionada]}</span>
-              <button className="btn-sm" onClick={() => { setListaSeleccionada(''); setItems([]) }}>Cambiar</button>
+              <button className="btn-sm" onClick={() => { setListaSeleccionada(''); setItems([]); setDrawerOpen(false) }}>Cambiar</button>
             </div>
             <div className="form-group" style={{margin: 0, flex: 1, maxWidth: 280}}>
               <input type="text" placeholder="Cliente (opcional)" value={cliente} onChange={e => setCliente(e.target.value)} />
@@ -128,6 +135,9 @@ function Ventas() {
                   </div>
                 )}
               </div>
+              <button className="btn-sm btn-drawer-toggle" onClick={() => { setDrawerOpen(!drawerOpen); setDrawerBusqueda('') }} title="Ver lista de productos">
+                <List size={16} /> Ver lista
+              </button>
               {seleccionado && <span style={{fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap', paddingTop: 10}}>Stock: {getStock(seleccionado.codigo)}</span>}
               <input type="number" className="cantidad-input" min="1" max={seleccionado ? getStock(seleccionado.codigo) : 999} value={cantidad} onChange={e => setCantidad(e.target.value)} />
               <button className="btn-primary" onClick={handleAgregar} disabled={!seleccionado}>Agregar</button>
@@ -156,6 +166,49 @@ function Ventas() {
           </div>
         </>
       )}
+
+      {/* Drawer overlay */}
+      {drawerOpen && <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />}
+
+      {/* Drawer panel */}
+      <div className={`drawer ${drawerOpen ? 'drawer-open' : ''}`}>
+        <div className="drawer-header">
+          <div>
+            <h3 className="drawer-title">Productos — {listasNombres[listaSeleccionada]}</h3>
+            <p className="drawer-subtitle">{drawerProductos.length} productos disponibles</p>
+          </div>
+          <button className="drawer-close" onClick={() => setDrawerOpen(false)}><X size={20} /></button>
+        </div>
+
+        <div className="drawer-search">
+          <input type="text" placeholder="Filtrar por código o nombre..." value={drawerBusqueda} onChange={e => setDrawerBusqueda(e.target.value)} />
+        </div>
+
+        <div className="drawer-list">
+          {drawerProductos.map(p => {
+            const stk = getStock(p.codigo)
+            const yaEnVenta = items.filter(i => i.codigo === p.codigo).reduce((s, i) => s + i.cantidad, 0)
+            return (
+              <div key={p.id} className={`drawer-item ${stk === 0 ? 'drawer-item-disabled' : ''}`} onClick={() => stk > 0 && handleDrawerAdd(p)}>
+                <div className="drawer-item-main">
+                  <span className="drawer-item-code">{p.codigo}</span>
+                  <span className="drawer-item-name">{p.nombre}</span>
+                </div>
+                <div className="drawer-item-meta">
+                  <span className="drawer-item-price">{fmt(p.precioUnitario || 0)}</span>
+                  <span className={`drawer-item-stock ${stk === 0 ? 'stock-empty' : ''}`}>
+                    {stk === 0 ? 'Sin stock' : `Stock: ${stk}`}
+                  </span>
+                  {yaEnVenta > 0 && <span className="drawer-item-added">({yaEnVenta} en venta)</span>}
+                </div>
+              </div>
+            )
+          })}
+          {drawerProductos.length === 0 && (
+            <div className="drawer-empty">No se encontraron productos</div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
