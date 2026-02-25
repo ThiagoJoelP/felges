@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, Cog, Calculator, ShoppingCart, FileText, Warehouse } from 'lucide-react'
+import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse } from 'lucide-react'
 
 function Sidebar() {
   const links = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/', label: 'Panel Principal', icon: LayoutDashboard },
     { to: '/productos', label: 'Productos', icon: Package },
     { to: '/componentes', label: 'Componentes', icon: Cog },
-    { to: '/costos', label: 'Costos', icon: Calculator },
     { to: '/ventas', label: 'Ventas', icon: ShoppingCart },
     { to: '/facturacion', label: 'Facturación', icon: FileText },
     { to: '/stock', label: 'Stock', icon: Warehouse },
@@ -40,7 +39,7 @@ function Sidebar() {
         })}
       </nav>
       <div className="sidebar-footer">
-        <small>v1.0 — FEL-MA</small>
+        <small>FELMA – SCI - Version 0.9.0</small>
       </div>
     </aside>
   )
