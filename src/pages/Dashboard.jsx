@@ -29,8 +29,8 @@ function Dashboard() {
     <div className="dashboard">
       <header className="page-header">
         <div>
-          <h2>Dashboard</h2>
-          <p>FEL-MA — Fábrica de depósitos y repuestos sanitarios</p>
+          <h2>Panel Principal</h2>
+          <p>FELMA - SISTEMA DE CONTROL INDUSTRIAL</p>
         </div>
       </header>
 
