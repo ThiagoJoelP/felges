@@ -1,5 +1,8 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Productos from './pages/Productos'
 import Componentes from './pages/Componentes'
@@ -7,18 +10,33 @@ import Costos from './pages/Costos'
 import Ventas from './pages/Ventas'
 import Facturacion from './pages/Facturacion'
 import Stock from './pages/Stock'
+import Usuarios from './pages/Usuarios'
 
 function App() {
+  const { user, isAdmin } = useAuth()
+
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
+  }
+
   return (
     <Routes>
+      <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="/" element={<Layout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="productos" element={<Productos />} />
-        <Route path="componentes" element={<Componentes />} />
-        <Route path="costos" element={<Costos />} />
-        <Route path="ventas" element={<Ventas />} />
-        <Route path="facturacion" element={<Facturacion />} />
-        <Route path="stock" element={<Stock />} />
+        <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="productos" element={<ProtectedRoute><Productos /></ProtectedRoute>} />
+        <Route path="componentes" element={<ProtectedRoute><Componentes /></ProtectedRoute>} />
+        <Route path="costos" element={<ProtectedRoute><Costos /></ProtectedRoute>} />
+        <Route path="ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
+        <Route path="facturacion" element={<ProtectedRoute><Facturacion /></ProtectedRoute>} />
+        <Route path="stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
+        {isAdmin && <Route path="usuarios" element={<Usuarios />} />}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   )

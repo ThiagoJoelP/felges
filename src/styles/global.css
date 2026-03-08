@@ -61,8 +61,25 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 }
 .nav-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.07); }
 .nav-link.active { color: #fff; background: var(--teal); font-weight: 600; box-shadow: 0 2px 8px rgba(42,157,143,0.3); }
-.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+.sidebar-separator { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0; }
+.sidebar-footer { padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
 .sidebar-footer small { color: rgba(255,255,255,0.25); font-size: 11px; }
+
+/* Sidebar user info */
+.sidebar-user {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.12);
+}
+.sidebar-user-info { display: flex; flex-direction: column; }
+.sidebar-user-name { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; }
+.sidebar-user-role { color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 400; text-transform: capitalize; }
+.sidebar-logout {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; color: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.15s;
+}
+.sidebar-logout:hover { background: rgba(231,111,81,0.2); color: var(--amber); border-color: rgba(231,111,81,0.3); }
 
 /* ---- CARDS ---- */
 .card {
@@ -348,6 +365,87 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 .vigencia-ok { background: var(--teal-light); color: var(--teal); }
 .vigencia-warning { background: var(--warning-light); color: var(--warning-dark); }
 .vigencia-danger { background: var(--amber-light); color: var(--amber); }
+
+/* ---- LOGIN PAGE ---- */
+.login-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 50%, #1e4d6e 100%);
+  padding: 20px;
+}
+.login-card {
+  width: 100%; max-width: 400px; background: var(--bg-card);
+  border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.login-header {
+  background: var(--navy); padding: 32px 32px 28px; text-align: center;
+}
+.login-logo {
+  width: 52px; height: 52px; background: var(--teal); color: #fff;
+  border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 22px; margin-bottom: 12px;
+}
+.login-header h1 { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+.login-header p { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 2px; }
+.login-form-wrapper { padding: 28px 32px; }
+.login-form-wrapper h2 { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 20px; }
+.login-field { margin-bottom: 16px; }
+.login-field label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.login-field input {
+  width: 100%; padding: 11px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px; color: var(--text); outline: none; transition: all 0.15s;
+}
+.login-field input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-light); }
+.login-field input::placeholder { color: var(--text-muted); }
+.login-btn {
+  width: 100%; padding: 12px; background: var(--teal); color: #fff; border: none;
+  border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; margin-top: 8px;
+}
+.login-btn:hover { background: var(--teal-hover); box-shadow: 0 4px 12px rgba(42,157,143,0.3); }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-error {
+  background: var(--amber-light); border: 1px solid rgba(231,111,81,0.3); color: var(--amber);
+  padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 16px;
+}
+.login-footer {
+  text-align: center; padding: 14px; color: var(--text-muted); font-size: 11px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ---- USUARIOS / PERMISOS ---- */
+.rol-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600;
+}
+.rol-admin { background: rgba(15,41,66,0.08); color: var(--navy); }
+.rol-empleado { background: var(--teal-light); color: var(--teal); }
+
+.permisos-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px;
+}
+.permiso-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 7px;
+  cursor: pointer; transition: all 0.15s; font-size: 13px; background: var(--bg-card);
+}
+.permiso-item:hover { border-color: var(--teal); }
+.permiso-active { background: var(--teal-light); border-color: var(--teal); }
+.permiso-locked { opacity: 0.6; cursor: default; }
+.permiso-locked:hover { border-color: var(--border); }
+.permiso-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--teal); cursor: pointer; }
+.permiso-locked input[type="checkbox"] { cursor: default; }
+
+.permisos-inline-panel {
+  padding: 16px 20px; background: var(--bg); border-top: 1px solid var(--border);
+}
+.permisos-inline-panel strong {
+  font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+}
 
 /* ---- MISC ---- */
 code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--teal); }
