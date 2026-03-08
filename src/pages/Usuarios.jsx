@@ -3,6 +3,7 @@ import { db } from '../firebase/config'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
 import { useAuth } from '../contexts/AuthContext'
 import { Shield, ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import { registrarLog } from '../utils/logger'
 
 function Usuarios() {
   const { user: currentUser, ALL_PAGES } = useAuth()
@@ -13,7 +14,7 @@ function Usuarios() {
   const [form, setForm] = useState({ usuario: '', password: '', rol: 'empleado', permisos: ['dashboard'] })
   const [showPassword, setShowPassword] = useState(false)
   const [mensaje, setMensaje] = useState('')
-  const [editPermisos, setEditPermisos] = useState(null) // userId being edited
+  const [editPermisos, setEditPermisos] = useState(null)
 
   useEffect(() => {
     const q = query(collection(db, 'usuarios'), orderBy('usuario'))
@@ -42,11 +43,12 @@ function Usuarios() {
     try {
       if (editandoId) {
         await updateDoc(doc(db, 'usuarios', editandoId), data)
+        await registrarLog({ usuario: currentUser?.usuario, accion: 'editar', modulo: 'Usuarios', detalle: `Editó el usuario "${data.usuario}" (rol: ${data.rol})` })
       } else {
-        // Check duplicates
         const exists = usuarios.find(u => u.usuario === data.usuario)
         if (exists) { alert('Ya existe un usuario con ese nombre'); return }
         await addDoc(collection(db, 'usuarios'), { ...data, creadoEn: new Date().toISOString() })
+        await registrarLog({ usuario: currentUser?.usuario, accion: 'crear', modulo: 'Usuarios', detalle: `Creó el usuario "${data.usuario}" con rol ${data.rol}` })
       }
       resetForm()
       setShowForm(false)
@@ -67,6 +69,7 @@ function Usuarios() {
     if (u.id === currentUser.id) { alert('No podés eliminar tu propio usuario'); return }
     if (window.confirm(`¿Eliminar el usuario "${u.usuario}"?`)) {
       await deleteDoc(doc(db, 'usuarios', u.id))
+      await registrarLog({ usuario: currentUser?.usuario, accion: 'eliminar', modulo: 'Usuarios', detalle: `Eliminó el usuario "${u.usuario}"` })
     }
   }
 
@@ -74,7 +77,7 @@ function Usuarios() {
     const u = usuarios.find(x => x.id === userId)
     if (!u) return
     let permisos = [...(u.permisos || [])]
-    if (pageKey === 'dashboard') return // Dashboard always enabled
+    if (pageKey === 'dashboard') return
     if (permisos.includes(pageKey)) {
       permisos = permisos.filter(p => p !== pageKey)
     } else {

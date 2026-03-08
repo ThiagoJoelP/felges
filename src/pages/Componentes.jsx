@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
 import { CalendarDays } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { registrarLog } from '../utils/logger'
 
 function Componentes() {
+  const { user } = useAuth()
   const [componentes, setComponentes] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -38,9 +41,11 @@ function Componentes() {
     try {
       if (editandoId) {
         await updateDoc(doc(db, 'componentes', editandoId), data)
+        await registrarLog({ usuario: user?.usuario, accion: 'editar', modulo: 'Componentes', detalle: `Editó el componente "${form.nombre}"` })
         setEditandoId(null)
       } else {
         await addDoc(collection(db, 'componentes'), { ...data, creadoEn: new Date().toISOString() })
+        await registrarLog({ usuario: user?.usuario, accion: 'crear', modulo: 'Componentes', detalle: `Creó el componente "${form.nombre}" con costo total $${costoTotal.toFixed(2)}` })
       }
       resetForm()
       setShowForm(false)
@@ -59,8 +64,11 @@ function Componentes() {
     setShowForm(true)
   }
 
-  const handleEliminar = async (id) => {
-    if (window.confirm('¿Eliminar este componente?')) await deleteDoc(doc(db, 'componentes', id))
+  const handleEliminar = async (comp) => {
+    if (window.confirm('¿Eliminar este componente?')) {
+      await deleteDoc(doc(db, 'componentes', comp.id))
+      await registrarLog({ usuario: user?.usuario, accion: 'eliminar', modulo: 'Componentes', detalle: `Eliminó el componente "${comp.nombre}"` })
+    }
   }
 
   const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -168,7 +176,7 @@ function Componentes() {
                   </td>
                   <td>
                     <button className="btn-sm" onClick={() => handleEditar(c)}>Editar</button>
-                    <button className="btn-sm btn-danger" onClick={() => handleEliminar(c.id)}>Eliminar</button>
+                    <button className="btn-sm btn-danger" onClick={() => handleEliminar(c)}>Eliminar</button>
                   </td>
                 </tr>
               )

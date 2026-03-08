@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse, Users, LogOut } from 'lucide-react'
+import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse, Users, LogOut, ClipboardList } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 function Sidebar() {
@@ -14,7 +14,6 @@ function Sidebar() {
     { to: '/stock', key: 'stock', label: 'Stock', icon: Warehouse },
   ]
 
-  // Filter links based on permissions
   const visibleLinks = allLinks.filter(link => hasAccess(link.key))
 
   return (
@@ -49,6 +48,10 @@ function Sidebar() {
             <NavLink to="/usuarios" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               <Users size={18} strokeWidth={1.8} />
               <span>Usuarios</span>
+            </NavLink>
+            <NavLink to="/historial" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              <ClipboardList size={18} strokeWidth={1.8} />
+              <span>Historial</span>
             </NavLink>
           </>
         )}

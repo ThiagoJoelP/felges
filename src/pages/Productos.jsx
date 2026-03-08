@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { useAuth } from '../contexts/AuthContext'
+import { registrarLog } from '../utils/logger'
 
 function Productos() {
+  const { user } = useAuth()
   const [productos, setProductos] = useState([])
   const [componentes, setComponentes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,9 +62,11 @@ function Productos() {
     try {
       if (editandoId) {
         await updateDoc(doc(db, 'productos', editandoId), data)
+        await registrarLog({ usuario: user?.usuario, accion: 'editar', modulo: 'Productos', detalle: `Editó el producto ${form.codigo} - ${form.nombre}` })
         setEditandoId(null)
       } else {
         await addDoc(collection(db, 'productos'), { ...data, creadoEn: new Date().toISOString() })
+        await registrarLog({ usuario: user?.usuario, accion: 'crear', modulo: 'Productos', detalle: `Creó el producto ${form.codigo} - ${form.nombre} (${form.tipo})` })
       }
       setForm({ codigo: '', nombre: '', tipo: 'simple', unidadVenta: '', precioUnitario: '', estado: 'activo', lista: 'distribuidor', componentesIds: [] })
       setShowForm(false)
@@ -74,7 +79,12 @@ function Productos() {
     setShowForm(true)
   }
 
-  const handleEliminar = async (id) => { if (window.confirm('¿Eliminar este producto?')) await deleteDoc(doc(db, 'productos', id)) }
+  const handleEliminar = async (prod) => {
+    if (window.confirm('¿Eliminar este producto?')) {
+      await deleteDoc(doc(db, 'productos', prod.id))
+      await registrarLog({ usuario: user?.usuario, accion: 'eliminar', modulo: 'Productos', detalle: `Eliminó el producto ${prod.codigo} - ${prod.nombre}` })
+    }
+  }
 
   const toggleComponente = (cid) => {
     setForm(prev => ({ ...prev, componentesIds: prev.componentesIds.includes(cid) ? prev.componentesIds.filter(x => x !== cid) : [...prev.componentesIds, cid] }))
@@ -181,7 +191,7 @@ function Productos() {
                           {verComponentes === prod.id ? 'Ocultar' : 'Componentes'}
                         </button>
                       )}
-                      <button className="btn-sm btn-danger" onClick={() => handleEliminar(prod.id)}>Eliminar</button>
+                      <button className="btn-sm btn-danger" onClick={() => handleEliminar(prod)}>Eliminar</button>
                     </td>
                   </tr>
                   {verComponentes === prod.id && comps.length > 0 && (
