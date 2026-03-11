@@ -13,7 +13,10 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
     "firebase": "^11.0.0",
-    "lucide-react": "^0.460.0"
+    "lucide-react": "^0.460.0",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
