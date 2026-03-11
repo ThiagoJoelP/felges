@@ -62,11 +62,11 @@ function Productos() {
     try {
       if (editandoId) {
         await updateDoc(doc(db, 'productos', editandoId), data)
-        await registrarLog({ usuario: user?.usuario, accion: 'editar', modulo: 'Productos', detalle: `Edit\u00f3 el producto ${form.codigo} - ${form.nombre}` })
+        await registrarLog({ usuario: user?.usuario, accion: 'editar', modulo: 'Productos', detalle: `Editó el producto ${form.codigo} - ${form.nombre}` })
         setEditandoId(null)
       } else {
         await addDoc(collection(db, 'productos'), { ...data, creadoEn: new Date().toISOString() })
-        await registrarLog({ usuario: user?.usuario, accion: 'crear', modulo: 'Productos', detalle: `Cre\u00f3 el producto ${form.codigo} - ${form.nombre} (${form.tipo})` })
+        await registrarLog({ usuario: user?.usuario, accion: 'crear', modulo: 'Productos', detalle: `Creó el producto ${form.codigo} - ${form.nombre} (${form.tipo})` })
       }
       setForm(emptyForm)
       setShowForm(false)
@@ -80,9 +80,9 @@ function Productos() {
   }
 
   const handleEliminar = async (prod) => {
-    if (window.confirm('\u00bfEliminar este producto?')) {
+    if (window.confirm('¿Eliminar este producto?')) {
       await deleteDoc(doc(db, 'productos', prod.id))
-      await registrarLog({ usuario: user?.usuario, accion: 'eliminar', modulo: 'Productos', detalle: `Elimin\u00f3 el producto ${prod.codigo} - ${prod.nombre}` })
+      await registrarLog({ usuario: user?.usuario, accion: 'eliminar', modulo: 'Productos', detalle: `Eliminó el producto ${prod.codigo} - ${prod.nombre}` })
     }
   }
 
@@ -95,7 +95,7 @@ function Productos() {
   return (
     <div>
       <header className="page-header">
-        <div><h2>Productos</h2><p>Gesti\u00f3n de productos simples y compuestos</p></div>
+        <div><h2>Productos</h2><p>Gestión de productos simples y compuestos</p></div>
         <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm(emptyForm) }}>
           {showForm ? 'Cancelar' : '+ Nuevo Producto'}
         </button>
@@ -105,7 +105,7 @@ function Productos() {
         <div className="card form-card">
           <h3>{editandoId ? 'Editar Producto' : 'Nuevo Producto'}</h3>
           <div className="form-grid">
-            <div className="form-group"><label>C\u00f3digo</label><input type="text" placeholder="Ej: RS019" value={form.codigo} onChange={e => setForm({...form, codigo: e.target.value})} /></div>
+            <div className="form-group"><label>Código</label><input type="text" placeholder="Ej: RS019" value={form.codigo} onChange={e => setForm({...form, codigo: e.target.value})} /></div>
             <div className="form-group"><label>Nombre</label><input type="text" placeholder="Nombre del producto" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} /></div>
             <div className="form-group"><label>Tipo</label>
               <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value, componentesIds: e.target.value === 'simple' ? [] : form.componentesIds})}>
@@ -137,7 +137,7 @@ function Productos() {
             <div style={{marginTop: 16}}>
               <label style={{fontWeight: 600, fontSize: 12, marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--text-secondary)'}}>Seleccionar Componentes:</label>
               {componentes.length === 0 ? (
-                <p style={{color: '#94a3b8', fontSize: 13}}>No hay componentes. Crealos primero en la secci\u00f3n Componentes.</p>
+                <p style={{color: '#94a3b8', fontSize: 13}}>No hay componentes. Crealos primero en la sección Componentes.</p>
               ) : (
                 <div className="componentes-selector">
                   {componentes.map(c => (
@@ -163,13 +163,13 @@ function Productos() {
 
       <div className="card" style={{marginTop: 16}}>
         <div className="table-filters">
-          <input type="text" className="search-input" placeholder="Buscar por c\u00f3digo o nombre..." value={filtro} onChange={e => setFiltro(e.target.value)} />
+          <input type="text" className="search-input" placeholder="Buscar por código o nombre..." value={filtro} onChange={e => setFiltro(e.target.value)} />
           <select className="filter-select" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
             <option value="todos">Todos los tipos</option><option value="simple">Simple</option><option value="compuesto">Compuesto</option>
           </select>
         </div>
         <table className="data-table">
-          <thead><tr><th>C\u00f3digo</th><th>Nombre</th><th>Tipo</th><th>Unidad</th><th>P. Unit.</th><th>P. Lote</th><th>Lista</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Unidad</th><th>P. Unit.</th><th>P. Lote</th><th>Lista</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody>
             {productosFiltrados.map(prod => {
               const comps = getComponentesProducto(prod)
