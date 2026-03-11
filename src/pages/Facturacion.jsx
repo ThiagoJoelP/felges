@@ -33,8 +33,8 @@ function Facturacion() {
 
   return (
     <div>
-      <header className="page-header"><div><h2>Facturaci\u00f3n</h2><p>Generar facturas a partir de ventas realizadas</p></div></header>
-      {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>\u2713 {mensaje}</div>}
+      <header className="page-header"><div><h2>Facturación</h2><p>Generar facturas a partir de ventas realizadas</p></div></header>
+      {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>✓ {mensaje}</div>}
 
       <div className="card">
         <div className="table-filters">
@@ -66,10 +66,10 @@ function Facturacion() {
 
       {ventaSeleccionada && (
         <div className="card" style={{marginTop: 20}}>
-          <h3>Generar Factura \u2014 Venta de {fmtFecha(ventaSeleccionada.fecha)}</h3>
+          <h3>Generar Factura — Venta de {fmtFecha(ventaSeleccionada.fecha)}</h3>
           <p className="card-desc">Cliente: {ventaSeleccionada.cliente} | Total: {fmt(ventaSeleccionada.total)}</p>
           <table className="data-table" style={{marginTop: 12}}>
-            <thead><tr><th>C\u00f3digo</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
+            <thead><tr><th>Código</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
             <tbody>
               {ventaSeleccionada.items?.map((i, idx) => (
                 <tr key={idx}><td><strong>{i.codigo}</strong></td><td>{i.nombre}</td><td>{fmt(i.precioUnit)}</td><td>{i.cantidad}</td><td><strong>{fmt(i.subtotal)}</strong></td></tr>
