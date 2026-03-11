@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, onSnapshot, updateDoc, doc, query, orderBy } from 'firebase/firestore'
 import { fmt, fmtFecha, listasNombres } from '../utils/format'
+import ExportButton from '../components/ExportButton'
 
 function Facturacion() {
   const [ventas, setVentas] = useState([])
@@ -31,9 +32,19 @@ function Facturacion() {
     setGuardando(false)
   }
 
+  const exportColumns = ['Fecha', 'Cliente', 'Lista', 'Items', 'Total', 'Estado']
+  const exportRows = ventasFiltradas.map(v => [
+    fmtFecha(v.fecha), v.cliente, listasNombres[v.lista] || v.lista,
+    (v.items?.length || 0) + ' productos', fmt(v.total),
+    v.facturada ? `Facturada (${v.tipoFactura})` : 'Pendiente'
+  ])
+
   return (
     <div>
-      <header className="page-header"><div><h2>Facturación</h2><p>Generar facturas a partir de ventas realizadas</p></div></header>
+      <header className="page-header">
+        <div><h2>Facturación</h2><p>Generar facturas a partir de ventas realizadas</p></div>
+        <ExportButton title="Facturación" columns={exportColumns} rows={exportRows} filename="facturacion-felma" />
+      </header>
       {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>✓ {mensaje}</div>}
 
       <div className="card">
