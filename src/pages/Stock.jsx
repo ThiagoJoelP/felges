@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore'
 import { fmt, listasNombresCortos } from '../utils/format'
+import ExportButton from '../components/ExportButton'
 
 function Stock() {
   const [productos, setProductos] = useState([])
@@ -51,12 +52,24 @@ function Stock() {
   }
 
   const getEstado = (cant, min) => { if (cant === 0) return 'sin_stock'; if (cant < (min || 0)) return 'bajo'; return 'ok' }
+  const getEstadoTexto = (estado) => { if (estado === 'ok') return 'OK'; if (estado === 'bajo') return 'Bajo'; return 'Sin stock' }
+
+  const exportColumns = ['Código', 'Producto', 'Tipo', 'Lista', 'Stock', 'Estado']
+  const exportRows = productosFiltrados.map(p => {
+    const cant = getStockCant(p.codigo)
+    const si = getStockItem(p.codigo)
+    const estado = getEstado(cant, si?.minimo)
+    return [p.codigo, p.nombre, p.tipo === 'simple' ? 'Simple' : 'Compuesto', listasNombresCortos[p.lista] || '-', cant + ' u.', getEstadoTexto(estado)]
+  })
 
   if (loading) return <div style={{padding: 40, textAlign: 'center', color: '#64748b'}}>Cargando...</div>
 
   return (
     <div>
-      <header className="page-header"><div><h2>Stock</h2><p>Control de inventario por producto</p></div></header>
+      <header className="page-header">
+        <div><h2>Stock</h2><p>Control de inventario por producto</p></div>
+        <ExportButton title="Stock" columns={exportColumns} rows={exportRows} filename="stock-felma" />
+      </header>
 
       <div className="card">
         <div className="table-filters">
