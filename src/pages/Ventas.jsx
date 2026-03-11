@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { List, X } from 'lucide-react'
+import { fmt, listasNombres } from '../utils/format'
 
 function Ventas() {
   const [productos, setProductos] = useState([])
@@ -27,8 +28,6 @@ function Ventas() {
   const productosLista = productos.filter(p => p.lista === listaSeleccionada && p.estado === 'activo')
   const getStock = (codigo) => { const s = stockData.find(x => x.codigo === codigo); return s ? (s.cantidad || 0) : 0 }
   const getStockDoc = (codigo) => stockData.find(x => x.codigo === codigo)
-  const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const listasNombres = { distribuidor: 'Distribuidores', mayorista: 'Mayoristas', vendedor: 'Vendedor Propio' }
 
   const drawerProductos = productosLista.filter(p => {
     if (!drawerBusqueda) return true
@@ -61,10 +60,7 @@ function Ventas() {
     setBusqueda(''); setSeleccionado(null); setCantidad(1)
   }
 
-  const handleDrawerAdd = (prod) => {
-    agregarProducto(prod, 1)
-  }
-
+  const handleDrawerAdd = (prod) => agregarProducto(prod, 1)
   const handleEliminarItem = (id) => setItems(items.filter(i => i.id !== id))
   const total = items.reduce((s, i) => s + i.subtotal, 0)
 
@@ -90,16 +86,16 @@ function Ventas() {
   return (
     <div>
       <header className="page-header"><div><h2>Ventas</h2><p>Registrar ventas por lista de precios</p></div></header>
-      {mensaje && <div className="alertas-bar" style={{background: 'var(--teal-light)', borderColor: 'var(--teal)', color: '#065f46'}}>✓ {mensaje}</div>}
+      {mensaje && <div className="alertas-bar" style={{background: 'var(--teal-light)', borderColor: 'var(--teal)', color: '#065f46'}}>\u2713 {mensaje}</div>}
 
       {!listaSeleccionada ? (
         <div className="card">
-          <h3>Seleccioná la lista de precios</h3>
-          <p className="card-desc">Elegí la lista según el tipo de cliente</p>
+          <h3>Seleccion\u00e1 la lista de precios</h3>
+          <p className="card-desc">Eleg\u00ed la lista seg\u00fan el tipo de cliente</p>
           <div className="lista-selector">
             {Object.entries(listasNombres).map(([k, v]) => (
               <button key={k} className="lista-option" onClick={() => setListaSeleccionada(k)}>
-                <span className="lista-option-icon">📋</span><span className="lista-option-name">{v}</span>
+                <span className="lista-option-icon">\ud83d\udccb</span><span className="lista-option-name">{v}</span>
               </button>
             ))}
           </div>
@@ -120,12 +116,12 @@ function Ventas() {
             <h3>Agregar Producto</h3>
             <div className="factura-agregar">
               <div className="autocomplete-wrapper">
-                <input type="text" className="search-input" placeholder="Buscar por código o nombre..." value={busqueda} onChange={e => handleBusqueda(e.target.value)} />
+                <input type="text" className="search-input" placeholder="Buscar por c\u00f3digo o nombre..." value={busqueda} onChange={e => handleBusqueda(e.target.value)} />
                 {sugerencias.length > 0 && (
                   <div className="autocomplete-list">
                     {sugerencias.map(s => (
                       <div key={s.id} className="autocomplete-item" onClick={() => handleSeleccionar(s)}>
-                        <div><strong>{s.codigo}</strong> — {s.nombre}</div>
+                        <div><strong>{s.codigo}</strong> \u2014 {s.nombre}</div>
                         <div style={{display:'flex', gap: 12, fontSize: 12}}>
                           <span className="autocomplete-precio">{fmt(s.precioUnitario || 0)}/u.</span>
                           <span style={{color: '#94a3b8'}}>Stock: {getStock(s.codigo)}</span>
@@ -146,13 +142,13 @@ function Ventas() {
 
           <div className="card" style={{marginTop: 14}}>
             <table className="data-table">
-              <thead><tr><th>Código</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
+              <thead><tr><th>C\u00f3digo</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
               <tbody>
                 {items.map(i => (
                   <tr key={i.id}><td><strong>{i.codigo}</strong></td><td>{i.nombre}</td><td>{fmt(i.precioUnit)}</td><td>{i.cantidad}</td><td><strong>{fmt(i.subtotal)}</strong></td>
-                    <td><button className="btn-sm btn-danger" onClick={() => handleEliminarItem(i.id)}>✕</button></td></tr>
+                    <td><button className="btn-sm btn-danger" onClick={() => handleEliminarItem(i.id)}>\u2715</button></td></tr>
                 ))}
-                {items.length === 0 && <tr><td colSpan="6" style={{textAlign: 'center', color: '#94a3b8', padding: 32}}>Agregá productos para la venta</td></tr>}
+                {items.length === 0 && <tr><td colSpan="6" style={{textAlign: 'center', color: '#94a3b8', padding: 32}}>Agreg\u00e1 productos para la venta</td></tr>}
               </tbody>
             </table>
             {items.length > 0 && (
@@ -167,23 +163,18 @@ function Ventas() {
         </>
       )}
 
-      {/* Drawer overlay */}
       {drawerOpen && <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />}
-
-      {/* Drawer panel */}
       <div className={`drawer ${drawerOpen ? 'drawer-open' : ''}`}>
         <div className="drawer-header">
           <div>
-            <h3 className="drawer-title">Productos — {listasNombres[listaSeleccionada]}</h3>
+            <h3 className="drawer-title">Productos \u2014 {listasNombres[listaSeleccionada]}</h3>
             <p className="drawer-subtitle">{drawerProductos.length} productos disponibles</p>
           </div>
           <button className="drawer-close" onClick={() => setDrawerOpen(false)}><X size={20} /></button>
         </div>
-
         <div className="drawer-search">
-          <input type="text" placeholder="Filtrar por código o nombre..." value={drawerBusqueda} onChange={e => setDrawerBusqueda(e.target.value)} />
+          <input type="text" placeholder="Filtrar por c\u00f3digo o nombre..." value={drawerBusqueda} onChange={e => setDrawerBusqueda(e.target.value)} />
         </div>
-
         <div className="drawer-list">
           {drawerProductos.map(p => {
             const stk = getStock(p.codigo)
@@ -196,17 +187,13 @@ function Ventas() {
                 </div>
                 <div className="drawer-item-meta">
                   <span className="drawer-item-price">{fmt(p.precioUnitario || 0)}</span>
-                  <span className={`drawer-item-stock ${stk === 0 ? 'stock-empty' : ''}`}>
-                    {stk === 0 ? 'Sin stock' : `Stock: ${stk}`}
-                  </span>
+                  <span className={`drawer-item-stock ${stk === 0 ? 'stock-empty' : ''}`}>{stk === 0 ? 'Sin stock' : `Stock: ${stk}`}</span>
                   {yaEnVenta > 0 && <span className="drawer-item-added">({yaEnVenta} en venta)</span>}
                 </div>
               </div>
             )
           })}
-          {drawerProductos.length === 0 && (
-            <div className="drawer-empty">No se encontraron productos</div>
-          )}
+          {drawerProductos.length === 0 && <div className="drawer-empty">No se encontraron productos</div>}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
-import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc } from 'firebase/firestore'
+import { collection, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore'
+import { fmt, listasNombresCortos } from '../utils/format'
 
 function Stock() {
   const [productos, setProductos] = useState([])
@@ -19,8 +20,6 @@ function Stock() {
 
   const getStockItem = (codigo) => stockData.find(s => s.codigo === codigo)
   const getStockCant = (codigo) => { const s = getStockItem(codigo); return s ? (s.cantidad || 0) : 0 }
-  const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const listasNombres = { distribuidor: 'Distribuidor', mayorista: 'Mayorista', vendedor: 'Vendedor propio' }
 
   const productosFiltrados = productos.filter(p => {
     const mt = !filtro || p.codigo?.toLowerCase().includes(filtro.toLowerCase()) || p.nombre?.toLowerCase().includes(filtro.toLowerCase())
@@ -61,7 +60,7 @@ function Stock() {
 
       <div className="card">
         <div className="table-filters">
-          <input type="text" className="search-input" placeholder="Buscar por código o nombre..." value={filtro} onChange={e => setFiltro(e.target.value)} />
+          <input type="text" className="search-input" placeholder="Buscar por c\u00f3digo o nombre..." value={filtro} onChange={e => setFiltro(e.target.value)} />
           <select className="filter-select" value={filtroLista} onChange={e => setFiltroLista(e.target.value)}>
             <option value="">Todas las listas</option>
             <option value="distribuidor">Distribuidor</option><option value="mayorista">Mayorista</option><option value="vendedor">Vendedor propio</option>
@@ -71,7 +70,7 @@ function Stock() {
           </select>
         </div>
         <table className="data-table">
-          <thead><tr><th>Código</th><th>Producto</th><th>Tipo</th><th>Lista</th><th>Stock</th><th>Estado</th><th>Movimiento</th></tr></thead>
+          <thead><tr><th>C\u00f3digo</th><th>Producto</th><th>Tipo</th><th>Lista</th><th>Stock</th><th>Estado</th><th>Movimiento</th></tr></thead>
           <tbody>
             {productosFiltrados.map(p => {
               const cant = getStockCant(p.codigo)
@@ -82,9 +81,9 @@ function Stock() {
                   <td><strong>{p.codigo}</strong></td>
                   <td>{p.nombre}</td>
                   <td><span className={`badge ${p.tipo === 'compuesto' ? 'badge-blue' : ''}`}>{p.tipo === 'simple' ? 'Simple' : 'Compuesto'}</span></td>
-                  <td><span className="badge">{listasNombres[p.lista] || '-'}</span></td>
+                  <td><span className="badge">{listasNombresCortos[p.lista] || '-'}</span></td>
                   <td><strong>{cant}</strong> u.</td>
-                  <td><span className={`stock-badge stock-${estado}`}>{estado === 'ok' ? '✓ OK' : estado === 'bajo' ? '⚠ Bajo' : '✕ Sin stock'}</span></td>
+                  <td><span className={`stock-badge stock-${estado}`}>{estado === 'ok' ? '\u2713 OK' : estado === 'bajo' ? '\u26a0 Bajo' : '\u2715 Sin stock'}</span></td>
                   <td>
                     {movimiento.codigo === p.codigo ? (
                       <div className="mov-inline">
@@ -93,7 +92,7 @@ function Stock() {
                         </select>
                         <input type="number" min="1" placeholder="Cant." value={movimiento.cantidad} onChange={e => setMovimiento({...movimiento, cantidad: e.target.value})} />
                         <button className="btn-sm btn-success" onClick={() => handleMovimiento(p.codigo)}>OK</button>
-                        <button className="btn-sm" onClick={() => setMovimiento({ codigo: null, tipo: 'entrada', cantidad: '' })}>✕</button>
+                        <button className="btn-sm" onClick={() => setMovimiento({ codigo: null, tipo: 'entrada', cantidad: '' })}>\u2715</button>
                       </div>
                     ) : (
                       <button className="btn-sm" onClick={() => setMovimiento({ codigo: p.codigo, tipo: 'entrada', cantidad: '' })}>Registrar</button>

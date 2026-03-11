@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, onSnapshot, updateDoc, doc, query, orderBy } from 'firebase/firestore'
+import { fmt, fmtFecha, listasNombres } from '../utils/format'
 
 function Facturacion() {
   const [ventas, setVentas] = useState([])
@@ -16,14 +17,7 @@ function Facturacion() {
     return () => unsub()
   }, [])
 
-  const ventasFiltradas = ventas.filter(v => {
-    if (filtroLista && v.lista !== filtroLista) return false
-    return true
-  })
-
-  const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const fmtFecha = (f) => { try { return new Date(f).toLocaleDateString('es-AR') } catch { return f } }
-  const listasNombres = { distribuidor: 'Distribuidores', mayorista: 'Mayoristas', vendedor: 'Vendedor Propio' }
+  const ventasFiltradas = ventas.filter(v => !filtroLista || v.lista === filtroLista)
 
   const handleFacturar = async () => {
     if (!ventaSeleccionada) return
@@ -39,8 +33,8 @@ function Facturacion() {
 
   return (
     <div>
-      <header className="page-header"><div><h2>Facturación</h2><p>Generar facturas a partir de ventas realizadas</p></div></header>
-      {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>✓ {mensaje}</div>}
+      <header className="page-header"><div><h2>Facturaci\u00f3n</h2><p>Generar facturas a partir de ventas realizadas</p></div></header>
+      {mensaje && <div className="alertas-bar" style={{background: 'var(--accent-light)', borderColor: 'var(--accent)', color: '#065f46'}}>\u2713 {mensaje}</div>}
 
       <div className="card">
         <div className="table-filters">
@@ -72,17 +66,17 @@ function Facturacion() {
 
       {ventaSeleccionada && (
         <div className="card" style={{marginTop: 20}}>
-          <h3>Generar Factura — Venta de {fmtFecha(ventaSeleccionada.fecha)}</h3>
+          <h3>Generar Factura \u2014 Venta de {fmtFecha(ventaSeleccionada.fecha)}</h3>
           <p className="card-desc">Cliente: {ventaSeleccionada.cliente} | Total: {fmt(ventaSeleccionada.total)}</p>
           <table className="data-table" style={{marginTop: 12}}>
-            <thead><tr><th>Código</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
+            <thead><tr><th>C\u00f3digo</th><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
             <tbody>
               {ventaSeleccionada.items?.map((i, idx) => (
                 <tr key={idx}><td><strong>{i.codigo}</strong></td><td>{i.nombre}</td><td>{fmt(i.precioUnit)}</td><td>{i.cantidad}</td><td><strong>{fmt(i.subtotal)}</strong></td></tr>
               ))}
             </tbody>
           </table>
-          <div style={{marginTop: 16, display: 'flex', gap: 12, alignItems: 'center'}}>
+          <div style={{marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap'}}>
             <label style={{fontWeight: 600, fontSize: 14}}>Tipo de factura:</label>
             <select className="filter-select" value={tipoFactura} onChange={e => setTipoFactura(e.target.value)}>
               <option value="A">Factura A</option><option value="B">Factura B</option><option value="C">Factura C</option>
