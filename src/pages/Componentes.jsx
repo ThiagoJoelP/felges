@@ -5,6 +5,7 @@ import { CalendarDays } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { registrarLog } from '../utils/logger'
 import { fmt } from '../utils/format'
+import ExportButton from '../components/ExportButton'
 
 function Componentes() {
   const { user } = useAuth()
@@ -84,6 +85,11 @@ function Componentes() {
     return { clase: 'vigencia-danger', texto: `Hace ${dias} días` }
   }
 
+  const exportColumns = ['Nombre', 'Costo Materiales', 'Costo M.O.', 'Costo Luz', 'Costo Total', 'Vigencia']
+  const exportRows = componentes.map(c => [
+    c.nombre, fmt(c.costoMateriales), fmt(c.costoManoObra), fmt(c.costoLuz), fmt(c.costoTotal), formatFecha(c.fechaVigencia)
+  ])
+
   if (loading) return <div style={{padding: 40, textAlign: 'center', color: '#64748b'}}>Cargando componentes...</div>
 
   return (
@@ -93,9 +99,12 @@ function Componentes() {
           <h2>Componentes</h2>
           <p>Gestión de componentes para productos compuestos</p>
         </div>
-        <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm(emptyForm) }}>
-          {showForm ? 'Cancelar' : '+ Nuevo Componente'}
-        </button>
+        <div style={{display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap'}}>
+          <ExportButton title="Componentes" columns={exportColumns} rows={exportRows} filename="componentes-felma" />
+          <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm(emptyForm) }}>
+            {showForm ? 'Cancelar' : '+ Nuevo Componente'}
+          </button>
+        </div>
       </header>
 
       {showForm && (
