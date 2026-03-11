@@ -8,12 +8,10 @@ function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
 
-  // Close sidebar on route change (mobile)
   useEffect(() => {
     setMobileOpen(false)
   }, [location.pathname])
 
-  // Prevent body scroll when mobile sidebar open
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden'
@@ -28,7 +26,7 @@ function Sidebar() {
     { to: '/productos', key: 'productos', label: 'Productos', icon: Package },
     { to: '/componentes', key: 'componentes', label: 'Componentes', icon: Cog },
     { to: '/ventas', key: 'ventas', label: 'Ventas', icon: ShoppingCart },
-    { to: '/facturacion', key: 'facturacion', label: 'Facturaci\u00f3n', icon: FileText },
+    { to: '/facturacion', key: 'facturacion', label: 'Facturación', icon: FileText },
     { to: '/stock', key: 'stock', label: 'Stock', icon: Warehouse },
   ]
 
@@ -36,12 +34,10 @@ function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button */}
       <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)}>
         <Menu size={22} />
       </button>
 
-      {/* Mobile overlay */}
       {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
 
       <aside className={`sidebar ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
@@ -50,7 +46,7 @@ function Sidebar() {
             <div className="sidebar-logo-icon">F</div>
             <div>
               <h1 className="sidebar-logo">FELMA</h1>
-              <p className="sidebar-subtitle">Sistema de gesti\u00f3n</p>
+              <p className="sidebar-subtitle">Sistema de gestión</p>
             </div>
           </div>
           <button className="mobile-close-btn" onClick={() => setMobileOpen(false)}>
@@ -91,12 +87,12 @@ function Sidebar() {
             <span className="sidebar-user-name">{user?.usuario}</span>
             <span className="sidebar-user-role">{isAdmin ? 'Administrador' : 'Empleado'}</span>
           </div>
-          <button className="sidebar-logout" onClick={logout} title="Cerrar sesi\u00f3n">
+          <button className="sidebar-logout" onClick={logout} title="Cerrar sesión">
             <LogOut size={16} />
           </button>
         </div>
         <div className="sidebar-footer">
-          <small>FELMA \u2013 SCI - Version 1.0.0</small>
+          <small>FELMA – SCI - Version 1.0.0</small>
         </div>
       </aside>
     </>
