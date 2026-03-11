@@ -3,6 +3,7 @@ import { db } from '../firebase/config'
 import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { List, X } from 'lucide-react'
 import { fmt, listasNombres } from '../utils/format'
+import ExportButton from '../components/ExportButton'
 
 function Ventas() {
   const [productos, setProductos] = useState([])
@@ -83,6 +84,11 @@ function Ventas() {
     setGuardando(false)
   }
 
+  const ventaExportColumns = ['Código', 'Producto', 'Precio Unit.', 'Stock', 'Lista']
+  const ventaExportRows = productosLista.map(p => [
+    p.codigo, p.nombre, fmt(p.precioUnitario || 0), getStock(p.codigo) + ' u.', listasNombres[listaSeleccionada]
+  ])
+
   return (
     <div>
       <header className="page-header"><div><h2>Ventas</h2><p>Registrar ventas por lista de precios</p></div></header>
@@ -107,7 +113,12 @@ function Ventas() {
               <span className="factura-lista-badge">{listasNombres[listaSeleccionada]}</span>
               <button className="btn-sm" onClick={() => { setListaSeleccionada(''); setItems([]); setDrawerOpen(false) }}>Cambiar</button>
             </div>
-            <div className="form-group" style={{margin: 0, flex: 1, maxWidth: 280}}>
+            <div style={{marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center'}}>
+              <ExportButton title={`Ventas - ${listasNombres[listaSeleccionada]}`} columns={ventaExportColumns} rows={ventaExportRows} filename={`ventas-${listaSeleccionada}-felma`} />
+            </div>
+          </div>
+          <div style={{marginBottom: 8}}>
+            <div className="form-group" style={{margin: 0, maxWidth: 280}}>
               <input type="text" placeholder="Cliente (opcional)" value={cliente} onChange={e => setCliente(e.target.value)} />
             </div>
           </div>
