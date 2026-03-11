@@ -15,7 +15,7 @@ const ALL_PAGES = [
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const saved = sessionStorage.getItem('felma_user')
+    const saved = localStorage.getItem('felma_user')
     return saved ? JSON.parse(saved) : null
   })
   const [loading, setLoading] = useState(false)
@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
       if (snap.exists()) {
         const updated = { id: snap.id, ...snap.data() }
         setUser(updated)
-        sessionStorage.setItem('felma_user', JSON.stringify(updated))
+        localStorage.setItem('felma_user', JSON.stringify(updated))
       }
     })
     return () => unsub()
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
       const userData = { id: snap.docs[0].id, ...snap.docs[0].data() }
       if (userData.password !== password) { setError('Contraseña incorrecta'); setLoading(false); return false }
       setUser(userData)
-      sessionStorage.setItem('felma_user', JSON.stringify(userData))
+      localStorage.setItem('felma_user', JSON.stringify(userData))
       setLoading(false)
       return true
     } catch (err) {
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null)
-    sessionStorage.removeItem('felma_user')
+    localStorage.removeItem('felma_user')
   }
 
   const isAdmin = user?.rol === 'admin'
@@ -64,7 +64,6 @@ export function AuthProvider({ children }) {
   const hasAccess = (pageKey) => {
     if (!user) return false
     if (isAdmin) return true
-    // Employees check permisos array
     const permisos = user.permisos || []
     return permisos.includes(pageKey)
   }
@@ -73,7 +72,7 @@ export function AuthProvider({ children }) {
     if (!user) return false
     if (isAdmin) return true
     const page = ALL_PAGES.find(p => p.path === path)
-    if (!page) return true // unknown routes pass through
+    if (!page) return true
     return hasAccess(page.key)
   }
 
