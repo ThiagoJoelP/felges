@@ -4,6 +4,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, order
 import { useAuth } from '../contexts/AuthContext'
 import { registrarLog } from '../utils/logger'
 import { fmt, listasNombresCortos } from '../utils/format'
+import ExportButton from '../components/ExportButton'
 
 function Productos() {
   const { user } = useAuth()
@@ -90,15 +91,26 @@ function Productos() {
     setForm(prev => ({ ...prev, componentesIds: prev.componentesIds.includes(cid) ? prev.componentesIds.filter(x => x !== cid) : [...prev.componentesIds, cid] }))
   }
 
+  const exportColumns = ['Código', 'Nombre', 'Tipo', 'Unidad', 'P. Unitario', 'P. Lote', 'Lista', 'Estado']
+  const exportRows = productosFiltrados.map(p => [
+    p.codigo, p.nombre, p.tipo === 'simple' ? 'Simple' : 'Compuesto',
+    `x ${p.unidadVenta} u.`, fmt(p.precioUnitario),
+    fmt(p.precioLote || (p.precioUnitario || 0) * (p.unidadVenta || 0)),
+    listasNombresCortos[p.lista] || '-', p.estado === 'activo' ? 'Activo' : 'No se fabrica'
+  ])
+
   if (loading) return <div style={{padding: 40, textAlign: 'center', color: '#64748b'}}>Cargando...</div>
 
   return (
     <div>
       <header className="page-header">
         <div><h2>Productos</h2><p>Gestión de productos simples y compuestos</p></div>
-        <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm(emptyForm) }}>
-          {showForm ? 'Cancelar' : '+ Nuevo Producto'}
-        </button>
+        <div style={{display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap'}}>
+          <ExportButton title="Productos" columns={exportColumns} rows={exportRows} filename="productos-felma" />
+          <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm(emptyForm) }}>
+            {showForm ? 'Cancelar' : '+ Nuevo Producto'}
+          </button>
+        </div>
       </header>
 
       {showForm && (
