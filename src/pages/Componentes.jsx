@@ -42,11 +42,11 @@ function Componentes() {
     try {
       if (editandoId) {
         await updateDoc(doc(db, 'componentes', editandoId), data)
-        await registrarLog({ usuario: user?.usuario, accion: 'editar', modulo: 'Componentes', detalle: `Edit\u00f3 el componente "${form.nombre}"` })
+        await registrarLog({ usuario: user?.usuario, accion: 'editar', modulo: 'Componentes', detalle: `Editó el componente "${form.nombre}"` })
         setEditandoId(null)
       } else {
         await addDoc(collection(db, 'componentes'), { ...data, creadoEn: new Date().toISOString() })
-        await registrarLog({ usuario: user?.usuario, accion: 'crear', modulo: 'Componentes', detalle: `Cre\u00f3 el componente "${form.nombre}" con costo total $${costoTotal.toFixed(2)}` })
+        await registrarLog({ usuario: user?.usuario, accion: 'crear', modulo: 'Componentes', detalle: `Creó el componente "${form.nombre}" con costo total $${costoTotal.toFixed(2)}` })
       }
       setForm(emptyForm)
       setShowForm(false)
@@ -60,14 +60,14 @@ function Componentes() {
   }
 
   const handleEliminar = async (comp) => {
-    if (window.confirm('\u00bfEliminar este componente?')) {
+    if (window.confirm('¿Eliminar este componente?')) {
       await deleteDoc(doc(db, 'componentes', comp.id))
-      await registrarLog({ usuario: user?.usuario, accion: 'eliminar', modulo: 'Componentes', detalle: `Elimin\u00f3 el componente "${comp.nombre}"` })
+      await registrarLog({ usuario: user?.usuario, accion: 'eliminar', modulo: 'Componentes', detalle: `Eliminó el componente "${comp.nombre}"` })
     }
   }
 
   const formatFecha = (f) => {
-    if (!f) return '\u2014'
+    if (!f) return '—'
     const parts = f.split('-')
     if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`
     return f
@@ -79,9 +79,9 @@ function Componentes() {
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
     const dias = Math.floor((hoy - vigencia) / (1000 * 60 * 60 * 24))
-    if (dias <= 30) return { clase: 'vigencia-ok', texto: `Hace ${dias} d\u00eda${dias !== 1 ? 's' : ''}` }
-    if (dias <= 90) return { clase: 'vigencia-warning', texto: `Hace ${dias} d\u00edas` }
-    return { clase: 'vigencia-danger', texto: `Hace ${dias} d\u00edas` }
+    if (dias <= 30) return { clase: 'vigencia-ok', texto: `Hace ${dias} día${dias !== 1 ? 's' : ''}` }
+    if (dias <= 90) return { clase: 'vigencia-warning', texto: `Hace ${dias} días` }
+    return { clase: 'vigencia-danger', texto: `Hace ${dias} días` }
   }
 
   if (loading) return <div style={{padding: 40, textAlign: 'center', color: '#64748b'}}>Cargando componentes...</div>
@@ -91,7 +91,7 @@ function Componentes() {
       <header className="page-header">
         <div>
           <h2>Componentes</h2>
-          <p>Gesti\u00f3n de componentes para productos compuestos</p>
+          <p>Gestión de componentes para productos compuestos</p>
         </div>
         <button className="btn-primary" onClick={() => { setShowForm(!showForm); setEditandoId(null); setForm(emptyForm) }}>
           {showForm ? 'Cancelar' : '+ Nuevo Componente'}
