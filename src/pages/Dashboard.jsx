@@ -1,28 +1,47 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { db } from '../firebase/config'
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore'
+import { collection, onSnapshot, doc, getDoc, query, where, orderBy, limit } from 'firebase/firestore'
 import { fmt } from '../utils/format'
 import StatCard from '../components/StatCard'
 
 function Dashboard() {
   const [productos, setProductos] = useState([])
-  const [ventas, setVentas] = useState([])
+  const [ventasMes, setVentasMes] = useState([])
+  const [ventasPendientes, setVentasPendientes] = useState([])
   const [stock, setStock] = useState([])
   const [parametros, setParametros] = useState(null)
 
-  useEffect(() => {
-    const u1 = onSnapshot(collection(db, 'productos'), s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    const u2 = onSnapshot(collection(db, 'ventas'), s => setVentas(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    const u3 = onSnapshot(collection(db, 'stock'), s => setStock(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    getDoc(doc(db, 'configuracion', 'parametrosCostos')).then(snap => { if (snap.exists()) setParametros(snap.data()) })
-    return () => { u1(); u2(); u3() }
+  // Calcular inicio del mes actual como ISO string para filtrar en Firestore
+  const inicioMes = useMemo(() => {
+    const d = new Date()
+    d.setDate(1)
+    d.setHours(0, 0, 0, 0)
+    return d.toISOString()
   }, [])
 
+  useEffect(() => {
+    // Productos: colección pequeña, listener completo OK
+    const u1 = onSnapshot(collection(db, 'productos'), s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+
+    // Ventas del mes: filtradas en Firestore, no trae histórico
+    const qMes = query(collection(db, 'ventas'), where('fecha', '>=', inicioMes), orderBy('fecha', 'desc'))
+    const u2 = onSnapshot(qMes, s => setVentasMes(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+
+    // Ventas pendientes de facturar (para el contador)
+    const qPend = query(collection(db, 'ventas'), where('facturada', '==', false))
+    const u3 = onSnapshot(qPend, s => setVentasPendientes(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+
+    // Stock: colección pequeña
+    const u4 = onSnapshot(collection(db, 'stock'), s => setStock(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+
+    // Parámetros: lectura única
+    getDoc(doc(db, 'configuracion', 'parametrosCostos')).then(snap => { if (snap.exists()) setParametros(snap.data()) })
+
+    return () => { u1(); u2(); u3(); u4() }
+  }, [inicioMes])
+
   const activos = productos.filter(p => p.estado === 'activo').length
-  const mesActual = new Date().getMonth()
-  const ventasMes = ventas.filter(v => new Date(v.fecha).getMonth() === mesActual)
   const totalVentasMes = ventasMes.reduce((s, v) => s + (v.total || 0), 0)
-  const pendientes = ventas.filter(v => !v.facturada).length
 
   const getStockCant = (codigo) => {
     const s = stock.find(x => x.codigo === codigo)
@@ -52,7 +71,7 @@ function Dashboard() {
           <div className="summary-list">
             <div className="summary-item"><span className="summary-label">Productos simples</span><span className="summary-value">{productos.filter(p => p.tipo === 'simple').length}</span></div>
             <div className="summary-item"><span className="summary-label">Productos compuestos</span><span className="summary-value">{productos.filter(p => p.tipo === 'compuesto').length}</span></div>
-            <div className="summary-item"><span className="summary-label">Ventas pendientes de facturar</span><span className="summary-value" style={{color: pendientes > 0 ? '#e76f51' : 'inherit'}}>{pendientes}</span></div>
+            <div className="summary-item"><span className="summary-label">Ventas pendientes de facturar</span><span className="summary-value" style={{color: ventasPendientes.length > 0 ? '#e76f51' : 'inherit'}}>{ventasPendientes.length}</span></div>
             <div className="summary-item"><span className="summary-label">Precio kg plástico virgen</span><span className="summary-value">{parametros?.precioKgVirgen ? fmt(parametros.precioKgVirgen) : 'Sin configurar'}</span></div>
             <div className="summary-item"><span className="summary-label">Costo hora mano de obra</span><span className="summary-value">{parametros?.costoHoraMO ? fmt(parametros.costoHoraMO) : 'Sin configurar'}</span></div>
           </div>
