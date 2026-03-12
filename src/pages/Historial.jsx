@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore'
-import { Clock, Search, Filter, Trash2 } from 'lucide-react'
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore'
+import { Clock, Search } from 'lucide-react'
+
+const LOGS_LIMIT = 200
 
 function Historial() {
   const [logs, setLogs] = useState([])
@@ -11,7 +13,8 @@ function Historial() {
   const [filtroAccion, setFiltroAccion] = useState('todos')
 
   useEffect(() => {
-    const q = query(collection(db, 'historial'), orderBy('fecha', 'desc'))
+    // Limitar a los últimos 200 registros para evitar lecturas masivas
+    const q = query(collection(db, 'historial'), orderBy('fecha', 'desc'), limit(LOGS_LIMIT))
     const unsub = onSnapshot(q, (snap) => {
       setLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })))
       setLoading(false)
@@ -40,11 +43,7 @@ function Historial() {
   }
 
   const getAccionBadge = (accion) => {
-    const map = {
-      crear: 'log-crear',
-      editar: 'log-editar',
-      eliminar: 'log-eliminar'
-    }
+    const map = { crear: 'log-crear', editar: 'log-editar', eliminar: 'log-eliminar' }
     return map[accion] || 'log-otro'
   }
 
@@ -60,7 +59,7 @@ function Historial() {
       <header className="page-header">
         <div>
           <h2>Historial</h2>
-          <p>Registro de acciones realizadas en el sistema</p>
+          <p>Registro de acciones realizadas en el sistema (últimos {LOGS_LIMIT})</p>
         </div>
         <div className="log-counter">
           <Clock size={16} />
@@ -99,15 +98,9 @@ function Historial() {
           <tbody>
             {logsFiltrados.map(l => (
               <tr key={l.id}>
-                <td>
-                  <span className="log-fecha">{formatFecha(l.fecha)}</span>
-                </td>
+                <td><span className="log-fecha">{formatFecha(l.fecha)}</span></td>
                 <td><strong>{l.usuario}</strong></td>
-                <td>
-                  <span className={`log-accion-badge ${getAccionBadge(l.accion)}`}>
-                    {getAccionLabel(l.accion)}
-                  </span>
-                </td>
+                <td><span className={`log-accion-badge ${getAccionBadge(l.accion)}`}>{getAccionLabel(l.accion)}</span></td>
                 <td><span className="log-modulo">{l.modulo}</span></td>
                 <td><span className="log-detalle">{l.detalle}</span></td>
               </tr>
