@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
-import { collection, onSnapshot, updateDoc, doc, query, orderBy } from 'firebase/firestore'
+import { collection, onSnapshot, updateDoc, doc, query, orderBy, limit, where } from 'firebase/firestore'
 import { fmt, fmtFecha, listasNombres } from '../utils/format'
 import ExportButton from '../components/ExportButton'
 
 function Facturacion() {
   const [ventas, setVentas] = useState([])
   const [filtroLista, setFiltroLista] = useState('')
+  const [mostrarTodas, setMostrarTodas] = useState(false)
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null)
   const [tipoFactura, setTipoFactura] = useState('A')
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
 
   useEffect(() => {
-    const q = query(collection(db, 'ventas'), orderBy('fecha', 'desc'))
+    // Por defecto solo traer pendientes (las que necesitan facturar)
+    // Si el usuario quiere ver todas, traer las últimas 100
+    let q
+    if (mostrarTodas) {
+      q = query(collection(db, 'ventas'), orderBy('fecha', 'desc'), limit(100))
+    } else {
+      q = query(collection(db, 'ventas'), where('facturada', '==', false), orderBy('fecha', 'desc'))
+    }
     const unsub = onSnapshot(q, s => setVentas(s.docs.map(d => ({ id: d.id, ...d.data() }))))
     return () => unsub()
-  }, [])
+  }, [mostrarTodas])
 
   const ventasFiltradas = ventas.filter(v => !filtroLista || v.lista === filtroLista)
 
@@ -55,6 +63,9 @@ function Facturacion() {
             <option value="mayorista">Mayoristas</option>
             <option value="vendedor">Vendedor Propio</option>
           </select>
+          <button className={`btn-sm ${mostrarTodas ? 'btn-blue' : ''}`} onClick={() => { setMostrarTodas(!mostrarTodas); setVentaSeleccionada(null) }}>
+            {mostrarTodas ? 'Solo pendientes' : 'Ver todas'}
+          </button>
         </div>
         <table className="data-table">
           <thead><tr><th>Fecha</th><th>Cliente</th><th>Lista</th><th>Items</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -70,7 +81,7 @@ function Facturacion() {
                 <td>{!v.facturada && <button className="btn-sm btn-blue" onClick={() => setVentaSeleccionada(v)}>Facturar</button>}</td>
               </tr>
             ))}
-            {ventasFiltradas.length === 0 && <tr><td colSpan="7" style={{textAlign: 'center', color: '#64748b', padding: 32}}>No hay ventas registradas</td></tr>}
+            {ventasFiltradas.length === 0 && <tr><td colSpan="7" style={{textAlign: 'center', color: '#64748b', padding: 32}}>No hay ventas {mostrarTodas ? 'registradas' : 'pendientes'}</td></tr>}
           </tbody>
         </table>
       </div>
