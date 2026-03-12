@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
-import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, onSnapshot, addDoc, doc, updateDoc, query, where } from 'firebase/firestore'
 import { List, X } from 'lucide-react'
 import { fmt, listasNombres } from '../utils/format'
 import ExportButton from '../components/ExportButton'
@@ -20,17 +20,28 @@ function Ventas() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerBusqueda, setDrawerBusqueda] = useState('')
 
+  // Solo cargar productos cuando se selecciona una lista, filtrado en Firestore
   useEffect(() => {
-    const u1 = onSnapshot(collection(db, 'productos'), s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    const u2 = onSnapshot(collection(db, 'stock'), s => setStockData(s.docs.map(d => ({ id: d.id, ...d.data() }))))
-    return () => { u1(); u2() }
+    if (!listaSeleccionada) { setProductos([]); return }
+    const q = query(
+      collection(db, 'productos'),
+      where('lista', '==', listaSeleccionada),
+      where('estado', '==', 'activo')
+    )
+    const unsub = onSnapshot(q, s => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+    return () => unsub()
+  }, [listaSeleccionada])
+
+  // Stock: colección pequeña, listener completo
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'stock'), s => setStockData(s.docs.map(d => ({ id: d.id, ...d.data() }))))
+    return () => unsub()
   }, [])
 
-  const productosLista = productos.filter(p => p.lista === listaSeleccionada && p.estado === 'activo')
   const getStock = (codigo) => { const s = stockData.find(x => x.codigo === codigo); return s ? (s.cantidad || 0) : 0 }
   const getStockDoc = (codigo) => stockData.find(x => x.codigo === codigo)
 
-  const drawerProductos = productosLista.filter(p => {
+  const drawerProductos = productos.filter(p => {
     if (!drawerBusqueda) return true
     return p.codigo?.toLowerCase().includes(drawerBusqueda.toLowerCase()) || p.nombre?.toLowerCase().includes(drawerBusqueda.toLowerCase())
   })
@@ -39,7 +50,7 @@ function Ventas() {
     setBusqueda(val)
     setSeleccionado(null)
     if (val.length >= 1) {
-      setSugerencias(productosLista.filter(p => p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())))
+      setSugerencias(productos.filter(p => p.codigo?.toLowerCase().includes(val.toLowerCase()) || p.nombre?.toLowerCase().includes(val.toLowerCase())))
     } else { setSugerencias([]) }
   }
 
@@ -85,7 +96,7 @@ function Ventas() {
   }
 
   const ventaExportColumns = ['Código', 'Producto', 'Precio Unit.', 'Stock', 'Lista']
-  const ventaExportRows = productosLista.map(p => [
+  const ventaExportRows = productos.map(p => [
     p.codigo, p.nombre, fmt(p.precioUnitario || 0), getStock(p.codigo) + ' u.', listasNombres[listaSeleccionada]
   ])
 
