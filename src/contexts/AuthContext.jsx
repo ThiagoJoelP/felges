@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { db } from '../firebase/config'
 import { collection, query, where, getDocs, onSnapshot, doc } from 'firebase/firestore'
 
@@ -20,13 +20,23 @@ export function AuthProvider({ children }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Track the password at the moment of login to detect changes
+  const passwordAtLogin = useRef(user?.password || null)
 
-  // Listen to user doc changes in real-time (permissions updates)
   useEffect(() => {
     if (!user) return
     const unsub = onSnapshot(doc(db, 'usuarios', user.id), (snap) => {
       if (snap.exists()) {
         const updated = { id: snap.id, ...snap.data() }
+
+        // If password changed since login, force logout
+        if (passwordAtLogin.current && updated.password !== passwordAtLogin.current) {
+          setUser(null)
+          localStorage.removeItem('felma_user')
+          passwordAtLogin.current = null
+          return
+        }
+
         setUser(updated)
         localStorage.setItem('felma_user', JSON.stringify(updated))
       }
@@ -44,6 +54,7 @@ export function AuthProvider({ children }) {
       const userData = { id: snap.docs[0].id, ...snap.docs[0].data() }
       if (userData.password !== password) { setError('Contraseña incorrecta'); setLoading(false); return false }
       setUser(userData)
+      passwordAtLogin.current = userData.password
       localStorage.setItem('felma_user', JSON.stringify(userData))
       setLoading(false)
       return true
@@ -56,6 +67,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null)
+    passwordAtLogin.current = null
     localStorage.removeItem('felma_user')
   }
 
