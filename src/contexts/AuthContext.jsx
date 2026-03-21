@@ -13,6 +13,7 @@ const ALL_PAGES = [
   { key: 'stock', label: 'Stock', path: '/stock' },
   { key: 'clientes', label: 'Lista de Clientes', path: '/clientes' },
   { key: 'cargar_venta', label: 'Cargar Venta', path: '/cargar-venta' },
+  { key: 'mis_ventas', label: 'Mis Ventas', path: '/mis-ventas' },
 ]
 
 export function AuthProvider({ children }) {
