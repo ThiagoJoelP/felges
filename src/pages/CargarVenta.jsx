@@ -17,18 +17,24 @@ function CargarVenta() {
   const [mensaje, setMensaje] = useState('')
   const [loadingNum, setLoadingNum] = useState(true)
 
+  // Obtener próximo número de factura o remito
   useEffect(() => {
     const fetchNextNum = async () => {
       setLoadingNum(true)
       try {
-        const q = query(
-          collection(db, 'ventas_clientes'),
-          where('tipo', '==', tipo),
-          orderBy('numero', 'desc'),
-          limit(1)
-        )
+        // Traer todos los docs del tipo y buscar el max número en cliente
+        const q = query(collection(db, 'ventas_clientes'), where('tipo', '==', tipo))
         const snap = await getDocs(q)
-        setNumero(snap.empty ? 1 : (snap.docs[0].data().numero || 0) + 1)
+        if (snap.empty) {
+          setNumero(1)
+        } else {
+          let maxNum = 0
+          snap.docs.forEach(d => {
+            const n = d.data().numero || 0
+            if (n > maxNum) maxNum = n
+          })
+          setNumero(maxNum + 1)
+        }
       } catch {
         setNumero(1)
       }
@@ -37,18 +43,23 @@ function CargarVenta() {
     fetchNextNum()
   }, [tipo, mensaje])
 
+  // Obtener próximo ID de cliente autoincremental
   useEffect(() => {
     const fetchNextClienteId = async () => {
       try {
-        const q = query(
-          collection(db, 'ventas_clientes'),
-          orderBy('clienteIdNum', 'desc'),
-          limit(1)
-        )
-        const snap = await getDocs(q)
-        const next = snap.empty ? 1 : (snap.docs[0].data().clienteIdNum || 0) + 1
-        setNextClienteId(next)
-        setClienteIdManual(String(next))
+        const snap = await getDocs(collection(db, 'ventas_clientes'))
+        if (snap.empty) {
+          setNextClienteId(1)
+          setClienteIdManual('1')
+        } else {
+          let maxId = 0
+          snap.docs.forEach(d => {
+            const n = d.data().clienteIdNum || 0
+            if (n > maxId) maxId = n
+          })
+          setNextClienteId(maxId + 1)
+          setClienteIdManual(String(maxId + 1))
+        }
       } catch {
         setNextClienteId(1)
         setClienteIdManual('1')
