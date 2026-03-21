@@ -17,7 +17,7 @@ import CargarVenta from './pages/CargarVenta'
 import MisVentas from './pages/MisVentas'
 
 function App() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, hasAccess, ALL_PAGES } = useAuth()
 
   if (!user) {
     return (
@@ -28,11 +28,23 @@ function App() {
     )
   }
 
+  // Determine the home page: dashboard if has access, otherwise first permitted page
+  const getHomePage = () => {
+    if (isAdmin || hasAccess('dashboard')) return '/'
+    const firstPage = ALL_PAGES.find(p => p.key !== 'dashboard' && hasAccess(p.key))
+    return firstPage ? firstPage.path : '/'
+  }
+  const homePage = getHomePage()
+
   return (
     <Routes>
-      <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="/login" element={<Navigate to={homePage} replace />} />
       <Route path="/" element={<Layout />}>
-        <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        {homePage === '/' ? (
+          <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        ) : (
+          <Route index element={<Navigate to={homePage} replace />} />
+        )}
         <Route path="productos" element={<ProtectedRoute><Productos /></ProtectedRoute>} />
         <Route path="componentes" element={<ProtectedRoute><Componentes /></ProtectedRoute>} />
         <Route path="costos" element={<ProtectedRoute><Costos /></ProtectedRoute>} />
@@ -44,7 +56,7 @@ function App() {
         <Route path="mis-ventas" element={<ProtectedRoute><MisVentas /></ProtectedRoute>} />
         {isAdmin && <Route path="usuarios" element={<Usuarios />} />}
         {isAdmin && <Route path="historial" element={<Historial />} />}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={homePage} replace />} />
       </Route>
     </Routes>
   )
