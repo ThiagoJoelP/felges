@@ -44,9 +44,9 @@ function Clientes() {
     return true
   })
 
-  const exportColumns = ['ID Cliente', 'Tipo', 'Número', 'Fecha', 'Importe', 'Comisión', 'Estado']
+  const exportColumns = ['ID', 'Cliente', 'Tipo', 'Número', 'Fecha', 'Importe', 'Comisión', 'Estado']
   const exportRows = filtrados.map(r => [
-    r.clienteId || '—', r.tipo, r.numero,
+    r.clienteIdNum || '—', r.clienteNombre || '—', r.tipo, r.numero,
     formatFecha(r.fecha), fmt(r.importe),
     fmt(getComision(r.tipo, r.importe)),
     r.estado === 'pagado' ? 'Pagado' : 'No Pagado'
@@ -80,7 +80,8 @@ function Clientes() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>ID Cliente</th>
+              <th>ID</th>
+              <th>Cliente</th>
               <th>Tipo</th>
               <th>Número</th>
               <th>Fecha</th>
@@ -92,7 +93,8 @@ function Clientes() {
           <tbody>
             {filtrados.map(r => (
               <tr key={r.id}>
-                <td><strong>{r.clienteId || '—'}</strong></td>
+                <td><strong>{r.clienteIdNum || '—'}</strong></td>
+                <td>{r.clienteNombre || '—'}</td>
                 <td><span className={`badge ${r.tipo === 'FAC' ? 'badge-blue' : ''}`}>{r.tipo === 'FAC' ? 'Factura' : 'Remito'}</span></td>
                 <td><strong>{String(r.numero).padStart(4, '0')}</strong></td>
                 <td>{formatFecha(r.fecha)}</td>
@@ -110,7 +112,7 @@ function Clientes() {
               </tr>
             ))}
             {filtrados.length === 0 && (
-              <tr><td colSpan="7" style={{textAlign: 'center', color: '#64748b', padding: 32}}>No hay registros cargados</td></tr>
+              <tr><td colSpan="8" style={{textAlign: 'center', color: '#64748b', padding: 32}}>No hay registros cargados</td></tr>
             )}
           </tbody>
         </table>
