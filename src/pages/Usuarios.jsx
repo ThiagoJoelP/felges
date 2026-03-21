@@ -59,7 +59,7 @@ function Usuarios() {
   }
 
   const handleEditar = (u) => {
-    setForm({ usuario: u.usuario, password: u.password, rol: u.rol, permisos: u.permisos || ['dashboard'] })
+    setForm({ usuario: u.usuario, password: u.password, rol: u.rol, permisos: u.permisos || [] })
     setEditandoId(u.id)
     setShowForm(true)
     setEditPermisos(null)
@@ -77,7 +77,6 @@ function Usuarios() {
     const u = usuarios.find(x => x.id === userId)
     if (!u) return
     let permisos = [...(u.permisos || [])]
-    if (pageKey === 'dashboard') return
     if (permisos.includes(pageKey)) {
       permisos = permisos.filter(p => p !== pageKey)
     } else {
@@ -133,11 +132,9 @@ function Usuarios() {
               <div className="permisos-grid">
                 {ALL_PAGES.map(page => {
                   const checked = form.permisos.includes(page.key)
-                  const isDashboard = page.key === 'dashboard'
                   return (
-                    <label key={page.key} className={`permiso-item ${checked ? 'permiso-active' : ''} ${isDashboard ? 'permiso-locked' : ''}`}>
-                      <input type="checkbox" checked={checked} disabled={isDashboard} onChange={() => {
-                        if (isDashboard) return
+                    <label key={page.key} className={`permiso-item ${checked ? 'permiso-active' : ''}`}>
+                      <input type="checkbox" checked={checked} onChange={() => {
                         const p = [...form.permisos]
                         if (p.includes(page.key)) setForm({...form, permisos: p.filter(x => x !== page.key)})
                         else setForm({...form, permisos: [...p, page.key]})
@@ -198,10 +195,9 @@ function Usuarios() {
                         <div className="permisos-grid" style={{marginTop: 8}}>
                           {ALL_PAGES.map(page => {
                             const checked = (u.permisos || []).includes(page.key)
-                            const isDashboard = page.key === 'dashboard'
                             return (
-                              <label key={page.key} className={`permiso-item ${checked ? 'permiso-active' : ''} ${isDashboard ? 'permiso-locked' : ''}`}>
-                                <input type="checkbox" checked={checked || isDashboard} disabled={isDashboard} onChange={() => handleTogglePermiso(u.id, page.key)} />
+                              <label key={page.key} className={`permiso-item ${checked ? 'permiso-active' : ''}`}>
+                                <input type="checkbox" checked={checked} onChange={() => handleTogglePermiso(u.id, page.key)} />
                                 <span>{page.label}</span>
                               </label>
                             )
