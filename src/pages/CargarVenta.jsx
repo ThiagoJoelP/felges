@@ -8,14 +8,16 @@ function CargarVenta() {
   const { user } = useAuth()
   const [tipo, setTipo] = useState('FAC')
   const [numero, setNumero] = useState(null)
+  const [nextClienteId, setNextClienteId] = useState(null)
+  const [clienteIdManual, setClienteIdManual] = useState('')
+  const [clienteNombre, setClienteNombre] = useState('')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [importeRaw, setImporteRaw] = useState('')
-  const [clienteId, setClienteId] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [loadingNum, setLoadingNum] = useState(true)
 
-  // Obtener el próximo número de factura o remito
+  // Obtener próximo número de factura o remito
   useEffect(() => {
     const fetchNextNum = async () => {
       setLoadingNum(true)
@@ -27,11 +29,7 @@ function CargarVenta() {
           limit(1)
         )
         const snap = await getDocs(q)
-        if (snap.empty) {
-          setNumero(1)
-        } else {
-          setNumero((snap.docs[0].data().numero || 0) + 1)
-        }
+        setNumero(snap.empty ? 1 : (snap.docs[0].data().numero || 0) + 1)
       } catch {
         setNumero(1)
       }
@@ -40,18 +38,34 @@ function CargarVenta() {
     fetchNextNum()
   }, [tipo, mensaje])
 
-  // Formatear importe mientras se escribe (formato argentino: 1.234.567,89)
+  // Obtener próximo ID de cliente autoincremental
+  useEffect(() => {
+    const fetchNextClienteId = async () => {
+      try {
+        const q = query(
+          collection(db, 'ventas_clientes'),
+          orderBy('clienteIdNum', 'desc'),
+          limit(1)
+        )
+        const snap = await getDocs(q)
+        const next = snap.empty ? 1 : (snap.docs[0].data().clienteIdNum || 0) + 1
+        setNextClienteId(next)
+        setClienteIdManual(String(next))
+      } catch {
+        setNextClienteId(1)
+        setClienteIdManual('1')
+      }
+    }
+    fetchNextClienteId()
+  }, [mensaje])
+
   const handleImporteChange = (val) => {
-    // Solo permitir dígitos y coma
     let clean = val.replace(/[^\d,]/g, '')
-    // Solo una coma
     const parts = clean.split(',')
     if (parts.length > 2) clean = parts[0] + ',' + parts[1]
-    // Limitar decimales a 2
     if (parts.length === 2 && parts[1].length > 2) {
       clean = parts[0] + ',' + parts[1].substring(0, 2)
     }
-    // Formatear la parte entera con puntos de miles
     if (parts[0]) {
       const entero = parts[0].replace(/\./g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
       clean = parts.length === 2 ? entero + ',' + parts[1] : entero
@@ -61,7 +75,6 @@ function CargarVenta() {
 
   const parseImporte = (str) => {
     if (!str) return 0
-    // Quitar puntos de miles, cambiar coma por punto decimal
     return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0
   }
 
@@ -72,6 +85,7 @@ function CargarVenta() {
   const handleGuardar = async () => {
     if (!importeRaw || importe <= 0) return
     setGuardando(true)
+    const idNum = parseInt(clienteIdManual) || nextClienteId || 1
     try {
       await addDoc(collection(db, 'ventas_clientes'), {
         tipo,
@@ -79,14 +93,15 @@ function CargarVenta() {
         fecha: fecha + 'T00:00:00',
         importe,
         comision,
-        clienteId: clienteId.trim() || 'Sin ID',
+        clienteIdNum: idNum,
+        clienteNombre: clienteNombre.trim() || 'Sin nombre',
         estado: 'no_pagado',
         creadoPor: user?.usuario || 'desconocido',
         creadoEn: new Date().toISOString()
       })
       setMensaje(`${tipo === 'FAC' ? 'Factura' : 'Remito'} #${String(numero).padStart(4, '0')} cargada correctamente`)
       setImporteRaw('')
-      setClienteId('')
+      setClienteNombre('')
       setFecha(new Date().toISOString().split('T')[0])
       setTimeout(() => setMensaje(''), 5000)
     } catch (err) {
@@ -117,12 +132,23 @@ function CargarVenta() {
       <div className="card">
         <div className="form-grid" style={{gap: 18}}>
           <div className="form-group">
-            <label>ID de Cliente</label>
+            <label>ID Cliente</label>
             <input
               type="text"
-              placeholder="Identificación del cliente"
-              value={clienteId}
-              onChange={e => setClienteId(e.target.value)}
+              inputMode="numeric"
+              value={clienteIdManual}
+              onChange={e => setClienteIdManual(e.target.value.replace(/\D/g, ''))}
+              style={{fontWeight: 600}}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Nombre del Cliente</label>
+            <input
+              type="text"
+              placeholder="Nombre del cliente"
+              value={clienteNombre}
+              onChange={e => setClienteNombre(e.target.value)}
             />
           </div>
 
