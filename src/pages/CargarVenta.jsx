@@ -17,7 +17,6 @@ function CargarVenta() {
   const [mensaje, setMensaje] = useState('')
   const [loadingNum, setLoadingNum] = useState(true)
 
-  // Obtener próximo número de factura o remito
   useEffect(() => {
     const fetchNextNum = async () => {
       setLoadingNum(true)
@@ -38,7 +37,6 @@ function CargarVenta() {
     fetchNextNum()
   }, [tipo, mensaje])
 
-  // Obtener próximo ID de cliente autoincremental
   useEffect(() => {
     const fetchNextClienteId = async () => {
       try {
@@ -108,10 +106,6 @@ function CargarVenta() {
       alert('Error al guardar: ' + err.message)
     }
     setGuardando(false)
-  }
-
-  const fmtMoney = (n) => {
-    return '$' + n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   return (
@@ -201,19 +195,6 @@ function CargarVenta() {
             />
           </div>
         </div>
-
-        {importe > 0 && (
-          <div className="cargar-resumen">
-            <div className="cargar-resumen-row">
-              <span>Importe</span>
-              <strong>{fmtMoney(importe)}</strong>
-            </div>
-            <div className="cargar-resumen-row">
-              <span>Comisión ({comisionPct}%)</span>
-              <strong style={{color: 'var(--teal)'}}>{fmtMoney(comision)}</strong>
-            </div>
-          </div>
-        )}
 
         <div style={{marginTop: 24}}>
           <button
