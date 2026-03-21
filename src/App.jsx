@@ -12,6 +12,8 @@ import Facturacion from './pages/Facturacion'
 import Stock from './pages/Stock'
 import Usuarios from './pages/Usuarios'
 import Historial from './pages/Historial'
+import Clientes from './pages/Clientes'
+import CargarVenta from './pages/CargarVenta'
 
 function App() {
   const { user, isAdmin } = useAuth()
@@ -36,6 +38,8 @@ function App() {
         <Route path="ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
         <Route path="facturacion" element={<ProtectedRoute><Facturacion /></ProtectedRoute>} />
         <Route path="stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
+        <Route path="clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
+        <Route path="cargar-venta" element={<ProtectedRoute><CargarVenta /></ProtectedRoute>} />
         {isAdmin && <Route path="usuarios" element={<Usuarios />} />}
         {isAdmin && <Route path="historial" element={<Historial />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
