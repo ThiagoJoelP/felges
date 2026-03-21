@@ -11,6 +11,8 @@ const ALL_PAGES = [
   { key: 'ventas', label: 'Ventas', path: '/ventas' },
   { key: 'facturacion', label: 'Facturación', path: '/facturacion' },
   { key: 'stock', label: 'Stock', path: '/stock' },
+  { key: 'clientes', label: 'Lista de Clientes', path: '/clientes' },
+  { key: 'cargar_venta', label: 'Cargar Venta', path: '/cargar-venta' },
 ]
 
 export function AuthProvider({ children }) {
@@ -20,7 +22,6 @@ export function AuthProvider({ children }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Track the password at the moment of login to detect changes
   const passwordAtLogin = useRef(user?.password || null)
 
   useEffect(() => {
@@ -28,15 +29,12 @@ export function AuthProvider({ children }) {
     const unsub = onSnapshot(doc(db, 'usuarios', user.id), (snap) => {
       if (snap.exists()) {
         const updated = { id: snap.id, ...snap.data() }
-
-        // If password changed since login, force logout
         if (passwordAtLogin.current && updated.password !== passwordAtLogin.current) {
           setUser(null)
           localStorage.removeItem('felma_user')
           passwordAtLogin.current = null
           return
         }
-
         setUser(updated)
         localStorage.setItem('felma_user', JSON.stringify(updated))
       }
