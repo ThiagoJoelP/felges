@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse, Users, LogOut, ClipboardList, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse, Users, LogOut, ClipboardList, Menu, X, UserCheck, PlusCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useState, useEffect } from 'react'
 
@@ -28,6 +28,8 @@ function Sidebar() {
     { to: '/ventas', key: 'ventas', label: 'Ventas', icon: ShoppingCart },
     { to: '/facturacion', key: 'facturacion', label: 'Facturación', icon: FileText },
     { to: '/stock', key: 'stock', label: 'Stock', icon: Warehouse },
+    { to: '/clientes', key: 'clientes', label: 'Lista de Clientes', icon: UserCheck },
+    { to: '/cargar-venta', key: 'cargar_venta', label: 'Cargar Venta', icon: PlusCircle },
   ]
 
   const visibleLinks = allLinks.filter(link => hasAccess(link.key))
