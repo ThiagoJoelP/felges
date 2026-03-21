@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse, Users, LogOut, ClipboardList, Menu, X, UserCheck, PlusCircle } from 'lucide-react'
+import { LayoutDashboard, Package, Cog, ShoppingCart, FileText, Warehouse, Users, LogOut, ClipboardList, Menu, X, UserCheck, PlusCircle, ListOrdered } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useState, useEffect } from 'react'
 
@@ -21,7 +21,19 @@ function Sidebar() {
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
 
-  const allLinks = [
+  // Links visibles para admin (sin cargar_venta ni mis_ventas)
+  const adminLinks = [
+    { to: '/', key: 'dashboard', label: 'Panel Principal', icon: LayoutDashboard },
+    { to: '/productos', key: 'productos', label: 'Productos', icon: Package },
+    { to: '/componentes', key: 'componentes', label: 'Componentes', icon: Cog },
+    { to: '/ventas', key: 'ventas', label: 'Ventas', icon: ShoppingCart },
+    { to: '/facturacion', key: 'facturacion', label: 'Facturación', icon: FileText },
+    { to: '/stock', key: 'stock', label: 'Stock', icon: Warehouse },
+    { to: '/clientes', key: 'clientes', label: 'Lista de Clientes', icon: UserCheck },
+  ]
+
+  // Links para empleados (incluye cargar_venta y mis_ventas, controlados por permisos)
+  const empleadoLinks = [
     { to: '/', key: 'dashboard', label: 'Panel Principal', icon: LayoutDashboard },
     { to: '/productos', key: 'productos', label: 'Productos', icon: Package },
     { to: '/componentes', key: 'componentes', label: 'Componentes', icon: Cog },
@@ -30,8 +42,10 @@ function Sidebar() {
     { to: '/stock', key: 'stock', label: 'Stock', icon: Warehouse },
     { to: '/clientes', key: 'clientes', label: 'Lista de Clientes', icon: UserCheck },
     { to: '/cargar-venta', key: 'cargar_venta', label: 'Cargar Venta', icon: PlusCircle },
+    { to: '/mis-ventas', key: 'mis_ventas', label: 'Mis Ventas', icon: ListOrdered },
   ]
 
+  const allLinks = isAdmin ? adminLinks : empleadoLinks
   const visibleLinks = allLinks.filter(link => hasAccess(link.key))
 
   return (
